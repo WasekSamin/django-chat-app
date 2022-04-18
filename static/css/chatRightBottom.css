@@ -1,0 +1,13 @@
+#chat__rightVoiceModal {
+    z-index: -1;
+}
+
+#chat__rightVoiceModal > div {
+    transform: translate(-50%, -50%);
+}
+
+.show__voiceModal {
+    opacity: 1;
+    z-index: 20 !important;
+    transition: all 0.3s ease-in-out;
+}

@@ -1,0 +1,21 @@
+.chat__rightMiddleChat::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat__rightMiddleChat::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+}
+
+.chat__rightMiddleChat::-webkit-scrollbar-thumb {
+  background-color: darkgrey;
+  outline: 1px solid slategrey;
+  border-radius: 9999px;
+}
+
+.right__middleUsername {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 1; /* number of lines to show */
+  -webkit-box-orient: vertical;
+}

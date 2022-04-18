@@ -1,0 +1,19 @@
+{% extends "account/base.html" %}
+
+{% load static %}
+
+{% block content %}
+<script src="{% static 'js/home.js' %}" defer></script>
+
+<div class="flex w-full h-screen max-w-screen-2xl mx-auto">
+    {% comment %}Left section{% endcomment %}
+    <div class="w-[25%] h-screen">
+        {% include "chat/chatLeft.html" %}
+    </div>
+
+    {% comment %}Right section{% endcomment %}
+    <div class="w-full">
+        {% include "chat/homeRight.html" %}
+    </div>
+</div>
+{% endblock %}

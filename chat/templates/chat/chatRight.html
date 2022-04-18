@@ -1,0 +1,17 @@
+{% load static %}
+
+<link rel="stylesheet" href="{% static 'css/chatRight.css' %}">
+
+<div class="px-3 p-2 h-screen relative">
+    <div class="">
+        {% include "chat/chatRightTop.html" %}
+    </div>
+    <div class="flex flex-col items-between">
+        <div class="chat__rightMiddle">
+            {% include "chat/chatRightMiddle.html" %}
+        </div>
+        <div class="chat__rightBottom absolute left-0 bottom-1 w-full px-3">
+            {% include "chat/chatRightBottom.html" %}
+        </div>
+    </div>
+</div>

@@ -1,0 +1,41 @@
+{% extends "account/base.html" %}
+
+{% load static %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/register.css' %}">
+
+<script src="{% static 'js/login.js' %}" defer></script>
+
+<div class="h-screen w-full flex items-center justify-center">
+    <div class="w-1/2 rounded shadow p-5 bg-slate-700">
+        <h3 class="font-semibold text-2xl text-center mb-5">Sign In</h3>
+        <p id="login__errorMessage" class="font-semibold text-center my-3 text-rose-500 hidden"></p>
+        <form id="login__form" action="{% url 'account:account-login' %}" method="post" class="flex flex-col gap-y-3">
+            {% csrf_token %}
+            <section class="flex flex-col gap-y-1">
+                <label for="email">*Email</label>
+                <input autofocus id="email" name="email" type="email" class="bg-slate-600 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-600" placeholder="Enter email..." required>
+            </section>
+            <section class="flex flex-col gap-y-1">
+                <label for="password">*Password</label>
+                <input id="password" name="password" type="password" class="bg-slate-600 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-600" placeholder="Enter password..." required>
+            </section>
+
+            <div class="mt-3 flex flex-col gap-y-5">
+                <section class="flex justify-center">
+                    <button type="submit" id="login-submit-button" class="flex uppercase items-center gap-x-2 rounded px-16 py-3 min-w-max overflow-hidden shadow relative bg-indigo-500 text-white hover:bg-opacity-90">
+                        Sign in <div class="login__loader hidden"></div>
+                    </button>
+                </section>
+
+                <section class="text-center">
+                    <p class="text-xs text-slate-400">Don't have an account! <a href="{% url 'account:register' %}" class="hover:underline">Sign up</a> here</p>
+                </section>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

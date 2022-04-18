@@ -1,0 +1,36 @@
+{% load static %}
+
+{% comment %}Gravatar plugin{% endcomment %}
+<link rel="stylesheet" href="{% static 'css/gravatar.css' %}">
+<script src="{% static 'js/gravatar.min.js' %}" defer></script>
+
+{% comment %}Custom css + js{% endcomment %}
+<link rel="stylesheet" href="{% static 'css/chatLeftBottom.css' %}">
+<script src="{% static 'js/chatLeftBottom.js' %}" defer></script>
+
+<div class="w-full h-full flex flex-col gap-y-3 overflow-x-hidden overflow-y-auto chat__leftBottom">
+    {% if accounts %}
+        {% for account in accounts %}
+            <a href="{% url 'chat:chatroom-check-slug' account.id %}" class="flex items-center justify-between last:pb-7 chat__people">
+                <div class="flex items-center gap-x-1">
+                    <div>
+                        <div data-avatar="{{ account.username }}" class="avatarBlock round"></div>
+                    </div>
+                    <div class="flex flex-col gap-y-1">
+                        <p class="font-semibold chat__username">
+                            {{ account.username }}
+                        </p>
+                        <div class="flex items-center gap-x-1">
+                            <p class="text-xs text-slate-400">Status: </p>
+                            <div id="account-status-{{ account.id }}" class="w-[0.5rem] h-[0.5rem] rounded-full {% if account.is_online %}bg-green-500{% else %}bg-rose-500{% endif %}"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Show 99+ if unseen message length is greater than 99 -->
+                <div>
+                    <p id="user-unseen-message-{{ account.id }}" class="rounded-full w-[1.5rem] h-[1.5rem] bg-slate-600 text-xs flex items-center justify-center">99</p>
+                </div>
+            </a>
+        {% endfor %}
+    {% endif %}
+</div>

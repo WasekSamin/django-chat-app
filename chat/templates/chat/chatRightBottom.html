@@ -1,0 +1,47 @@
+{% load static %}
+
+{% comment %}Fuse js{% endcomment %}
+<script src="https://twemoji.maxcdn.com/v/14.0.2/twemoji.min.js" integrity="sha384-32KMvAMS4DUBcQtHG6fzADguo/tpN1Nh6BAJa2QqZc6/i0K+YPQE+bWiqBRAWuFs" crossorigin="anonymous" defer></script>
+
+{% comment %}Emoji keyboard css + js{% endcomment %}
+<link rel="stylesheet" href="{% static 'css/emojis.css' %}">
+<script src="{% static 'js/DisMojiPicker.js' %}" defer></script>
+
+{% comment %}For voice record{% endcomment %}
+<script src="{% static 'js/mic-recorder-mp3.js' %}" defer></script>
+
+{% comment %}Custom css + js{% endcomment %}
+<link rel="stylesheet" href="{% static 'css/chatRightBottom.css' %}">
+<script src="{% static 'js/chatRightBottom.js' %}" defer></script>
+
+<div class="bg-slate-700 p-3 relative rounded">
+    <div id="chat__rightVoiceModal" class="fixed w-full h-screen top-0 left-0 opacity-0">
+        <div class="absolute top-[50%] left-[50%] w-1/2 h-60 bg-white shadow z-50 rounded">
+            <div id="close__voiceModal" class="absolute top-1 right-1 cursor-pointer">
+                <span class="iconify text-lg text-rose-500" data-icon="ep:close-bold"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex items-center justify-between gap-x-5">
+        <div class="flex items-center gap-x-3">
+            <section id="emoji__picker" class="cursor-pointer">
+                <span class="iconify text-xl" data-icon="bi:emoji-sunglasses"></span>
+            </section>
+
+            {% comment %}All Emojis{% endcomment %}
+            <div class="absolute bottom-[100%] left-0 opacity-0 z-0" id="emojis"></div>
+
+            <label for="chat__inputFile" class="cursor-pointer">
+                <span class="iconify text-xl" data-icon="ant-design:file-text-outlined"></span>
+                <input type="file" name="files" id="chat__inputFile" multiple class="hidden">
+            </label>
+            <section id="voice__modal" class="cursor-pointer">
+                <span class="iconify text-xl" data-icon="bi:mic"></span>
+            </section>
+        </div>
+        <div class="flex-1">
+            <textarea placeholder="Type your message..." id="chat__messageField" rows="1" class="w-full px-3 py-1.5 rounded outline-none bg-slate-600 focus:ring-2 focus:ring-slate-500 focus:border-slate-600 resize-none"></textarea>
+        </div>
+    </div>
+</div>
