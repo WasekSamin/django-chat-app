@@ -1,4 +1,5 @@
 {% load static %}
+{% load file_filter %}
 
 {% comment %}Gravatar plugin{% endcomment %}
 <link rel="stylesheet" href="{% static 'css/gravatar.css' %}">
@@ -9,10 +10,20 @@
 <script src="{% static 'js/chatRightMiddle.js' %}" defer></script>
 
 <div class="h-full">
+    {% comment %}Chat image modal{% endcomment %}
+    <div id="chat__imageModal" class="fixed w-full max-w-screen-2xl mx-auto h-screen top-0 left-0 opacity-0">
+        <div id="close__chatImageModal" class="absolute right-2 top-2 cursor-pointer z-20">
+            <span class="iconify text-lg" data-icon="ep:close-bold"></span>
+        </div>
+        <div class="w-[70%] h-[70%] absolute top-[50%] left-[50%]">
+            <img class="w-full h-full object-contain chat__selectedImg" src="" alt="">
+        </div>
+    </div>
+
     <div class="h-full flex flex-col gap-y-3 py-3 overflow-x-hidden overflow-y-auto chat__rightMiddleChat">
         {% for chat in chats %}
             <div class="flex {% if request.session.email %}{% if chat.sender.email == request.session.email %}justify-end{% else %}justify-start{% endif %}{% endif %}">
-                <div class="flex gap-x-1 w-1/2">
+                <div class="flex gap-x-1 w-[75%] sm:w-1/2 chat__rightMiddleDivWidth">
                     <div>
                         <div data-avatar="{{ chat.sender.username }}" class="avatarBlock round"></div>
                     </div>
@@ -27,9 +38,27 @@
                         {% if chat.message %}
                             <p class="text-400">{{ chat.message }}</p>
                         {% elif chat.audio %}
-                            <div>
-                                <audio src="/media/{{ chat.audio }}"></audio>
+                            <div class="h-[40px] chat__audioDiv">
+                                <audio class="h-[40px] shadow" preload="auto" controls>
+                                    <source src="/media/{{ chat.audio }}" type="audio/mpeg" />
+                                    Your browser does not support the audio format!
+                                </audio>
                             </div>
+                        {% else %}
+                            {% for file in chat.files.all %}
+                                <div class="mb-1 last:mb-0">
+                                    {% with file.file|split:"." as file %}
+                                        {% if file.1 == "jpg" or file.1 == "png" or file.1 == "jpeg" or file.1 == "gif" %}
+                                            <img onclick="showChatImageModal(this)" src="{{ file.2.url }}" class="w-full h-48 object-cover cursor-pointer" />
+                                        {% else %}
+                                            <a class="flex items-center gap-x-1 text-sky-500" href="{{ file.2.url }}" download>
+                                                <span class="iconify download__icon" data-icon="eva:download-fill"></span>
+                                                <p class="chat__file">{{ file.0 }}.{{ file.1 }}</p>
+                                            </a>
+                                        {% endif %}
+                                    {% endwith %}
+                                </div>
+                            {% endfor %}
                         {% endif %}
                         <p class="text-500 text-xs">{{ chat.created_at }}</p>
                     </div>

@@ -3,9 +3,12 @@
 {% load static %}
 
 {% block content %}
+
+{% comment %}Custom css + js{% endcomment %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
 <script src="{% static 'js/home.js' %}" defer></script>
 
-<div class="flex w-full h-screen max-w-screen-2xl mx-auto">
+<div class="flex w-full h-screen max-w-screen-2xl mx-auto home__mainDiv">
     {% comment %}Left section{% endcomment %}
     <div class="w-[25%] h-screen">
         {% include "chat/chatLeft.html" %}

@@ -1,0 +1,9 @@
+@media (max-width: 870px) {
+  .home__mainDiv > div:first-child {
+    width: 100%;
+  }
+
+  .home__mainDiv > div:last-child {
+    display: none;
+  }
+}

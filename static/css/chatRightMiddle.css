@@ -19,3 +19,102 @@
   -webkit-line-clamp: 1; /* number of lines to show */
   -webkit-box-orient: vertical;
 }
+
+.chat__file {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* number of lines to show */
+  -webkit-box-orient: vertical;
+}
+
+/* Chat audio */
+.chat__audioDiv audio {
+  border-radius: 9999px;
+}
+
+.chat__audioDiv audio::-webkit-media-controls-panel {
+  background-color: rgb(51 65 85);
+  color: rgb(51 65 85);
+}
+
+#chat__imageModal {
+  z-index: -1;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+#chat__imageModal > div:last-child {
+  transform: translate(-50%, -50%);
+}
+
+.show__chatImageModal {
+  z-index: 20 !important;
+  opacity: 1;
+  transition: all 0.3s ease-in-out;
+}
+
+.download__icon {
+  width: 1rem;
+  min-width: 1rem;
+  max-width: 1rem;
+  height: 1rem;
+}
+
+@media (max-width: 730px) {
+  .chat__audioDiv audio {
+    width: 250px;
+  }
+}
+
+@media (max-width: 639px) {
+  .chat__audioDiv audio {
+    width: 300px;
+  }
+}
+
+@media (max-width: 530px) {
+  .chat__audioDiv audio {
+    width: 250px;
+  }
+}
+
+@media (max-width: 450px) {
+  /* .chat__audioDiv audio {
+    width: 200px;
+  } */
+
+  .chat__audioDiv audio::-webkit-media-controls-current-time-display,
+  .chat__audioDiv audio::-webkit-media-controls-time-remaining-display {
+    font-size: 0.7rem !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .chat__audioDiv audio {
+    width: 220px;
+  }
+}
+
+@media (max-width: 380px) {
+  .chat__audioDiv audio {
+    width: 200px;
+  }
+}
+
+@media (max-width: 360px) {
+  .chat__rightMiddleDivWidth {
+    width: 80%;
+  }
+}
+
+@media (max-width: 330px) {
+  .chat__audioDiv audio {
+    width: 190px;
+  }
+}
+
+@media (max-width: 320px) {
+  .chat__audioDiv audio {
+    width: 170px;
+  }
+}

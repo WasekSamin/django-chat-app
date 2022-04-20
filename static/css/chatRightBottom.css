@@ -1,5 +1,6 @@
 #chat__rightVoiceModal {
     z-index: -1;
+    background-color: rgba(0, 0, 0, 0.5);
 }
 
 #chat__rightVoiceModal > div {
@@ -10,4 +11,11 @@
     opacity: 1;
     z-index: 20 !important;
     transition: all 0.3s ease-in-out;
+}
+
+@media (min-width: 1536px) {
+    #chat__rightVoiceModal {
+        left: 50%;
+        transform: translateX(-50%);
+    }
 }

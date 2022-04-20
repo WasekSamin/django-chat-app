@@ -42,16 +42,10 @@ io.on("connection", (socket) => {
 
   // Create and receive a new text message
   socket.on("create-message", (chatObj) => {
-    // console.log(chatObj);
+    console.log(chatObj);
 
     if (chatObj) {
-      const sender = JSON.parse(chatObj.sender);
-      const receiver = JSON.parse(chatObj.receiver);
-      const room = receiver.email;
-
-      chatObj = { ...chatObj, sender: sender, receiver: receiver };
-      console.log(chatObj);
-
+      const room = chatObj.receiver.email;
       socket.to(room).emit("receive-message", chatObj);
     }
   });

@@ -9,7 +9,6 @@ urlpatterns = [
     path("chat/<str:room_slug>/", ChatroomView.as_view(), name="chatroom"),
     # Text message
     path("create-message/<str:room_slug>/", MessageView.as_view(), name="message"),
-    # Voice or file message
-    path("create-file-message/<str:room_slug>/", FileOrAudioCreateMessageView.as_view(), name="voice-file-message"),
+    path("file-request/<int:pk>/", FetchFileRequest.as_view(), name="file-request"),
     path("logout/", LogoutView.as_view(), name="logout"),
 ]

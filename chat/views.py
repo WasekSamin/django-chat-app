@@ -10,7 +10,7 @@ from .models import *
 from django.http import JsonResponse, HttpResponse
 import random
 import string
-import json
+import json, time
 from copy import deepcopy
 
 
@@ -68,9 +68,6 @@ def findAllMatchedChats(copiedChatList, account_list, itemList, room_slug):
             account_list, "id", copiedChatList[found_chat_obj]["receiver_id"], 0, len(account_list) - 1)
 
         if found_sender_obj > -1 and found_receiver_obj > -1:
-            # Formatting datetime
-            copiedChatList[found_chat_obj]["created_at"] = copiedChatList[found_chat_obj]["created_at"].strftime(
-                "%b %d, %Y %I:%M %p")
             # Setting sender and receiver object
             copiedChatList[found_chat_obj]["sender"] = account_list[found_sender_obj]
             copiedChatList[found_chat_obj]["receiver"] = account_list[found_receiver_obj]
@@ -84,21 +81,29 @@ def findAllMatchedChats(copiedChatList, account_list, itemList, room_slug):
 class ChatroomView(View):
     @method_decorator(is_user_logged_in())
     def get(self, request, room_slug):
-        accounts = Account.objects.all()
-
-        chatroom = Chatroom.objects.values()
-        chatroom_list = list(map(lambda i: i, chatroom))
-
         accounts = Account.objects.values()
         account_list = list(map(lambda i: i, accounts))
 
         quick_sort(account_list, "id", 0, len(account_list) - 1)
 
-        chatroom_list, chatroom_found_object = find_object(
-            chatroom_list, "room_slug", room_slug, 0, len(chatroom_list))
+        # For many to many fields, I have to do like this
+        chats = Chat.objects.all()
+        # chat_list = list(map(lambda i: i, chats))
+        chat_list = list(
+            map(
+                lambda i: {"id": i.id, \
+                    "sender_id": i.sender.id, \
+                    "receiver_id": i.receiver.id, \
+                    "room": i.room, \
+                    "chatroom_id": i.chatroom.id, \
+                    "message": i.message, \
+                    "audio": i.audio, \
+                    "files": i.files, \
+                    "created_at": i.created_at.strftime("%b %d, %Y %I:%M %p")}, chats
+                )
+            )
 
-        chats = Chat.objects.values()
-        chat_list = list(map(lambda i: i, chats))
+        # print(chat_list)
 
         quick_sort(chat_list, "room", 0, len(chat_list) - 1)
 
@@ -111,6 +116,7 @@ class ChatroomView(View):
 
         quick_sort(matchedChatList, "id", 0, len(matchedChatList) - 1)
 
+        # print(matchedChatList)
         args = {
             "accounts": accounts,
             "chats": matchedChatList,
@@ -118,6 +124,8 @@ class ChatroomView(View):
         return render(request, "chat/chat.html", args)
 
 
+# If chatroom exists, then navigate to the chatroom
+# Else create a new chatroom
 class ChatroomCheckSlugView(View):
     @method_decorator(is_user_logged_in())
     def get(self, request, pk):
@@ -233,92 +241,18 @@ def find_room_all_objects(room_slug, myself_email):
 class MessageView(View):
     @method_decorator(is_user_logged_in())
     def post(self, request, room_slug):
-        data = json.loads(request.body)
-        # print("THE DATA:", data)
-
-        sender_email = data["sender"]
-        message = data["message"].strip()
-
-        myself_email = request.session.get("email", None)
-
-        email_changed, email_status = check_for_sender_email(sender_email, myself_email)
-
-        if email_changed:
-            if email_status == "email_change":
-                return JsonResponse({
-                    "email_change": True,
-                    "email": myself_email
-                })
-            elif email_status == "email_delete":
-                return JsonResponse({
-                    "email_delete": True,
-                    "email": myself_email
-                })
-
-        found_chatroom_obj, found_account_obj, account_list = find_room_all_objects(room_slug, myself_email)
-
-        if found_chatroom_obj is not None and found_account_obj is not None and account_list is not None:
-            if found_account_obj is not None:
-                sender, receiver = get_message_sender_and_receiver(
-                    found_chatroom_obj, found_account_obj, account_list)
-
-                if receiver is not None:
-                    chatroom_obj = Chatroom(**found_chatroom_obj)
-                    sender_obj = Account(**sender)
-                    receiver_obj = Account(**receiver)
-
-                    chat_obj = Chat(
-                        room=chatroom_obj.room_slug,
-                        chatroom=chatroom_obj,
-                        sender=sender_obj,
-                        receiver=receiver_obj,
-                        message=message,
-                    )
-                    chat_obj.save()
-
-                    # Formatting chat datetime
-                    chat_obj_datetime = chat_obj.created_at.strftime(
-                        "%b %d, %Y %I:%M %p")
-                    # print(chat_obj_datetime)
-
-                    return JsonResponse({
-                        "id": chat_obj.id,
-                        "room": chat_obj.room,
-                        "sender": json.dumps({
-                            "username": sender_obj.username,
-                            "email": sender_obj.email,
-                        }),
-                        "receiver": json.dumps({
-                            "username": receiver_obj.username,
-                            "email": receiver_obj.email,
-                        }),
-                        "message": message,
-                        "created_at": chat_obj_datetime
-                    })
-                else:
-                    return JsonResponse({
-                        "invalid_request": True
-                    })
-            else:
-                return JsonResponse({
-                    "invalid_request": True
-                })
-        else:
-            return JsonResponse({
-                "invalid_request": True
-            })
-
-
-#### For audio or files message send ####
-class FileOrAudioCreateMessageView(View):
-    @method_decorator(is_user_logged_in())
-    def post(self, request, room_slug):
-        print(request.POST)
-        print(request.FILES)
-
         sender_email = request.POST.get("sender", None)
-        files = request.POST.getlist("files", None)
+        message = request.POST.get("message", None)
         audio = request.FILES.get("audio", None)
+        files = request.FILES.getlist("files", None)
+
+        print(sender_email)
+        print(message)
+        print(audio)
+        print(files)
+
+        if message is not None:
+            message = message.strip()
 
         myself_email = request.session.get("email", None)
 
@@ -353,16 +287,9 @@ class FileOrAudioCreateMessageView(View):
                         chatroom=chatroom_obj,
                         sender=sender_obj,
                         receiver=receiver_obj,
-                        audio=audio
                     )
-                    chat_obj.save()
 
-                    # Formatting chat datetime
-                    chat_obj_datetime = chat_obj.created_at.strftime(
-                        "%b %d, %Y %I:%M %p")
-                    
                     json_response = {
-                        "id": chat_obj.id,
                         "room": chat_obj.room,
                         "sender": json.dumps({
                             "username": sender_obj.username,
@@ -372,10 +299,21 @@ class FileOrAudioCreateMessageView(View):
                             "username": receiver_obj.username,
                             "email": receiver_obj.email,
                         }),
-                        "created_at": chat_obj_datetime
                     }
 
-                    if len(files) > 0:
+                    if message is not None:
+                        chat_obj.message = message
+                        json_response["message"] = True
+
+                    elif audio is not None:
+                        chat_obj.audio = audio
+                        json_response["audio"] = True
+
+                    chat_obj.save()
+
+                    json_response["id"] = chat_obj.id
+
+                    if files is not None and len(files) > 0:
                         for file in files:
                             file_obj = Files(
                                 file=file
@@ -383,23 +321,44 @@ class FileOrAudioCreateMessageView(View):
                             file_obj.save()
 
                             chat_obj.files.add(file_obj.id)
+                        json_response["files"] = True
 
-                    if audio:
-                        json_response["audio"] = True
-                        
-                    return JsonResponse(json_response, safe=False)
-                else:
-                    return JsonResponse({
-                        "invalid_request": True
-                    })
-            else:
+                    # Formatting chat datetime
+                    chat_obj_datetime = chat_obj.created_at.strftime(
+                        "%b %d, %Y %I:%M %p")
+                    json_response["created_at"] = chat_obj_datetime
+                    # print(chat_obj_datetime)
+
+                    return JsonResponse(json_response)
                 return JsonResponse({
                     "invalid_request": True
                 })
-        else:
             return JsonResponse({
                 "invalid_request": True
             })
+        return JsonResponse({
+            "invalid_request": True
+        })
+
+
+class FetchFileRequest(View):
+    def get(self, request, pk):
+        chat_obj = Chat.objects.get(pk=pk)
+
+        files = []
+        for file in chat_obj.files.all():
+            x = str(file.file)
+            files.append({"id": file.id, "file": x})
+
+        print(files)
+
+        return JsonResponse({
+            "sender": chat_obj.sender.username,
+            "receiver": chat_obj.receiver.email,
+            "files": json.dumps(files),
+            "created_at": chat_obj.created_at
+        })
+
 
 class LogoutView(View):
     def get(self, request):

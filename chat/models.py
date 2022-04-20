@@ -3,6 +3,7 @@ from enum import unique
 from django.db import models
 from datetime import datetime
 from django.contrib.auth import get_user_model
+from PIL import Image
 
 User = get_user_model()
 

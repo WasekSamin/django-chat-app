@@ -1,0 +1,5 @@
+@media (max-width: 870px) {
+    .chat__mainDiv > div:first-child {
+        display: none;
+    }
+}

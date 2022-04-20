@@ -9,8 +9,8 @@
 <script src="{% static 'js/register.js' %}" defer></script>
 
 <div class="h-screen w-full flex items-center justify-center">
-    <div class="w-1/2 rounded shadow p-5 bg-slate-700">
-        <h3 class="font-semibold text-2xl text-center mb-5">Sign Up</h3>
+    <div class="w-[85%] sm:w-[70%] md:w-1/2 rounded shadow p-5 bg-slate-700">
+        <h3 class="font-semibold text-xl sm:text-2xl text-center mb-5">Sign Up</h3>
         <p id="register__errorMessage" class="font-semibold text-center my-3 text-rose-500 hidden"></p>
         <form id="register__form" action="{% url 'account:account-create' %}" method="post" class="flex flex-col gap-y-3">
             {% csrf_token %}
