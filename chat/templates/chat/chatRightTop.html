@@ -4,21 +4,29 @@
 <link rel="stylesheet" href="{% static 'css/gravatar.css' %}">
 <script src="{% static 'js/gravatar.min.js' %}" defer></script>
 
-{% comment %}Custom css{% endcomment %}
+{% comment %}Custom css + js{% endcomment %}
 <link rel="stylesheet" href="{% static 'css/chatRightTop.css' %}">
+<script src="{% static 'js/chatRightTop.js' %}" defer></script>
 
 <div class="pb-1 border-b border-gray-600">
+    {% comment %}Call sending request modal{% endcomment %}
+    {% include "chat/senderCallModal.html" %}
+
     <div class="flex items-center justify-between">
         <div class="flex items-center gap-x-1">
             <a class="hidden chat__backHome" href="{% url 'chat:home' %}">
                 <span class="iconify text-lg" data-icon="bi:arrow-left"></span>
             </a>
             <div>
-                <div data-avatar="Wasek Samin" class="avatarBlock round"></div>
+                <div data-avatar="{% if request.session.email is not None and request.session.email == sender_obj.email %}{{ receiver_obj.username }}{% else %}{{ sender_obj.username }}{% endif %}" class="avatarBlock round"></div>
             </div>
             <div class="flex flex-col gap-y-1">
                 <p class="font-semibold mr-2 right__topUsername">
-                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Eligendi itaque voluptatibus esse, dolores doloribus nihil animi ad laudantium? Quo error doloremque nesciunt et unde similique dolore quasi sint est placeat.
+                    {% if request.session.email is not None and request.session.email == sender_obj.email %}
+                        {{ receiver_obj.username }}
+                    {% else %}
+                        {{ sender_obj.username }}
+                    {% endif %}
                 </p>
                 <div class="flex items-center gap-x-1">
                     <p class="text-xs text-slate-400">Status: </p>
@@ -27,7 +35,7 @@
             </div>
         </div>
         <div class="flex items-center gap-x-5">
-            <section class="cursor-pointer p-1.5 rounded-full hover:bg-slate-600 hover:shadow transition-colors duration-300 ease-in-out">
+            <section id="call__button" class="cursor-pointer p-1.5 rounded-full hover:bg-slate-600 hover:shadow transition-colors duration-300 ease-in-out">
                 <span class="iconify text-lg" data-icon="bx:phone-call"></span>
             </section>
             <section class="cursor-pointer p-1.5 rounded-full hover:bg-slate-600 hover:shadow transition-colors duration-300 ease-in-out">

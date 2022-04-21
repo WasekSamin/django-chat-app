@@ -6,6 +6,28 @@
   -webkit-box-orient: vertical;
 }
 
+#calling__modal {
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: -1;
+}
+
+.show__callingModal {
+  z-index: 20 !important;
+  opacity: 1;
+  transition: all 0.3s ease-in-out;
+}
+
+#calling__modal > div {
+  transform: translate(-50%, -50%);
+}
+
+@media (min-width: 1536px) {
+  #calling__modal {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
 @media (max-width: 870px) {
   .chat__backHome {
     display: inline;

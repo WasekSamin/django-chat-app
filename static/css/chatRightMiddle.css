@@ -60,6 +60,69 @@
   height: 1rem;
 }
 
+/* File upload loading animation */
+#file__loader {
+  animation: fileLoadingSpinner 1s infinite linear;
+}
+
+#chat__fileSendingModal {
+  z-index: -1;
+  transform: translateX(110%);
+}
+
+#chat__fileSendingModal > div {
+  width: 15rem;
+}
+
+.show__chatFileSendingModal {
+  opacity: 1;
+  z-index: 20 !important;
+  transition: all 0.3s ease-in-out;
+}
+
+/* Video call */
+#video__callModal {
+  z-index: -1;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+#video__callModal > div:first-child {
+  transform: translate(-50%, -50%);
+}
+
+.show__videoCallModal {
+  z-index: 20 !important;
+  opacity: 1;
+  transition: all 0.3s ease-in-out;
+}
+
+@keyframes fileLoadingSpinner {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg)
+  }
+}
+
+@media (max-width: 1299px) {
+  #chat__fileSendingModal > div {
+    width: 12rem;
+  }
+}
+
+@media (max-width: 1050px) {
+  #chat__fileSendingModal {
+    position: fixed;
+    left: unset;
+    bottom: unset;
+    top: 4rem;
+    right: 1rem;
+    z-index: 20;
+    transform: translateX(0);
+  }
+}
+
 @media (max-width: 730px) {
   .chat__audioDiv audio {
     width: 250px;

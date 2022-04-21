@@ -5,6 +5,7 @@ $(document).ready(() => {
   });
 });
 
+
 // Appending new message
 const appendMessage = (senderUsername, firstLetter, secondLetter, chatObj) => {
   const chatRightMiddle = document.querySelector(".chat__rightMiddleChat");
@@ -46,74 +47,77 @@ const appendMessage = (senderUsername, firstLetter, secondLetter, chatObj) => {
       <p class="text-500 text-xs">${chatObj.created_at}</p>
     `
   } else if (chatObj.type === "files") {
-    // Username section
-    const userNamePara = document.createElement("p");
-    userNamePara.setAttribute("class", "font-semibold right__middleUsername");
-    userNamePara.innerText = senderUsername;
+    // console.log(chatObj);
 
     fetch(`/file-request/${chatObj.id}/`)
     .then(res => {
       console.log(res);
-      return res.json();
-    }).then(data => {
-      const {sender, receiver, files, created_at} = data;
-      console.log(sender)
-      console.log(receiver)
-      console.log(files)
-      console.log(created_at)
-    })
-
-    // Files section
-    const fileMainDiv = document.createElement("div");
-    fileMainDiv.setAttribute("class", "mb-1 last:mb-0");
-
-    console.log(chatObj);
-
-    chatObj.files.map((file, i) => {
-      // Converting file array buffer to blob object
-      const blobFile = new Blob([file], { "type": chatObj.file_extensions[i] });
-      console.log(blobFile);
-
-      // For image files
-      if (chatObj.file_extensions[i] === "png" || 
-        chatObj.file_extensions[i] === "jpg" || 
-        chatObj.file_extensions[i] === "jpeg" || 
-        chatObj.file_extensions[i] === "gif") {
-          const imageDiv = document.createElement("img");
-          imageDiv.setAttribute("onclick", "showChatImageModal(this)")
-          imageDiv.setAttribute("class", `w-full h-48 object-cover cursor-pointer ${i !== chatObj.files.length - 1 ? "mb-2" : "mb-0"}`);
-          imageDiv.setAttribute("src", URL.createObjectURL(blobFile));
-          
-          fileMainDiv.appendChild(imageDiv);
-      } else {  // For other files except images
-        const downloadedFile = document.createElement("a");
-        downloadedFile.setAttribute("class", `flex items-center gap-x-1 text-sky-500 i ${i !== chatObj.files.length - 1 ? "mb-2" : "mb-0"}`);
-        downloadedFile.setAttribute("href", URL.createObjectURL(blobFile));
-        downloadedFile.setAttribute("download", chatObj.file_names[i]);
-
-        const downloadIcon = document.createElement("span");
-        downloadIcon.setAttribute("class", "iconify download__icon");
-        downloadIcon.setAttribute("data-icon", "eva:download-fill");
-
-        const fileInfo = document.createElement("p");
-        fileInfo.setAttribute("class", "chat__file");
-        fileInfo.innerText = chatObj.file_names[i];
-
-        downloadedFile.appendChild(downloadIcon);
-        downloadedFile.appendChild(fileInfo);
-
-        fileMainDiv.appendChild(downloadedFile);
+      if (res.ok) {
+        return res.json();
       }
-    })
+    }).then(data => {
+      if (data) {
+        const {sender, receiver, created_at} = data;
+        const files = JSON.parse(data.files);
 
-    // Datetime section
-    const messageCreatedAtPara = document.createElement("p");
-    messageCreatedAtPara.setAttribute("class", "text-500 text-xs");
-    messageCreatedAtPara.innerText = chatObj.created_at;
+        // Username section
+        const userNamePara = document.createElement("p");
+        userNamePara.setAttribute("class", "font-semibold right__middleUsername");
+        userNamePara.innerText = senderUsername;
 
-    messageDiv.appendChild(userNamePara);
-    messageDiv.appendChild(fileMainDiv);
-    messageDiv.appendChild(messageCreatedAtPara);
+        // Files section
+        const fileMainDiv = document.createElement("div");
+        fileMainDiv.setAttribute("class", "mb-1 last:mb-0");
+
+        files.map((file, i) => {
+          let file_extension = file.file.split(".");
+          file_extension = file_extension[file_extension.length - 1];
+
+          // If the file is image
+          if (file_extension === "jpg" || 
+            file_extension === "jpeg" ||
+            file_extension === "png" || 
+            file_extension === "gif"
+          ) {
+            const imageDiv = document.createElement("img");
+            imageDiv.setAttribute("onclick", "showChatImageModal(this)");
+            imageDiv.setAttribute("class", `w-full h-48 object-cover cursor-pointer ${i !== files.length - 1 ? "mb-2" : "mb-0"}`);
+            imageDiv.setAttribute("src", `/media/${file.file}`);
+
+            fileMainDiv.appendChild(imageDiv);
+          } else {  // If the file is not image
+            const fileName = file.file.split("file/")[1];
+
+            const downloadedFile = document.createElement("a");
+            downloadedFile.setAttribute("class", `flex items-center gap-x-1 text-sky-500 i ${i !== files.length - 1 ? "mb-2" : "mb-0"}`);
+            downloadedFile.setAttribute("href", `/media/${file.file}`);
+            downloadedFile.setAttribute("download", fileName);
+
+            const downloadIcon = document.createElement("span");
+            downloadIcon.setAttribute("class", "iconify download__icon");
+            downloadIcon.setAttribute("data-icon", "eva:download-fill");
+
+            const fileInfo = document.createElement("p");
+            fileInfo.setAttribute("class", "break-all chat__file");
+            fileInfo.innerText = fileName;
+
+            downloadedFile.appendChild(downloadIcon);
+            downloadedFile.appendChild(fileInfo);
+
+            fileMainDiv.appendChild(downloadedFile);
+          }
+        });
+
+        // Datetime section
+        const messageCreatedAtPara = document.createElement("p");
+        messageCreatedAtPara.setAttribute("class", "text-500 text-xs");
+        messageCreatedAtPara.innerText = chatObj.created_at;
+
+        messageDiv.appendChild(userNamePara);
+        messageDiv.appendChild(fileMainDiv);
+        messageDiv.appendChild(messageCreatedAtPara);
+      }
+    });
   }
 
   div2.appendChild(avatarDiv);

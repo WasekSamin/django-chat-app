@@ -50,6 +50,33 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Create and receiver call
+  socket.on("create-call", callObj => {
+    console.log(callObj);
+    if (callObj) {
+      const room = callObj.receiver.email;
+      socket.to(room).emit("receive-call", callObj);
+    }
+  });
+
+  // After the call is received by received
+  socket.on("call-received", callObj => {
+    console.log(callObj);
+
+    if (callObj) {
+      const room = callObj.sender.email;
+      socket.to(room).emit("receiver-accept-call", callObj);
+      socket.emit("receive-call-obj", callObj);
+    }
+  });
+
+  socket.on("call-rejected", callObj => {
+    if (callObj) {
+      const room = callObj.sender.email;
+      socket.to(room).emit("receiver-rejected-call", callObj);
+    }
+  })
+
   // Create and receive a new voice message
   socket.on("create-voice-message", chatObj => {
     console.log(chatObj);

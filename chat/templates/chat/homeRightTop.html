@@ -15,7 +15,11 @@
             </div>
             <div class="flex flex-col gap-y-1">
                 <p class="font-semibold mr-2 right__topUsername">
-                    Lorem ipsum, dolor sit amet consectetur adipisicing elit. Est, perferendis reprehenderit iusto, ut possimus adipisci aliquid dolor at, dicta maiores provident quia assumenda enim doloribus molestias placeat numquam consequatur alias.
+                    {% for account in accounts %}
+                        {% if request.session.email is not None and account.email == request.session.email %}
+                            {{ account.username }}
+                        {% endif %}
+                    {% endfor %}
                 </p>
                 <div class="flex items-center gap-x-1">
                     <p class="text-xs text-slate-400">Status: </p>

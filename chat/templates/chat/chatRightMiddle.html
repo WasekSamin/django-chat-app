@@ -11,12 +11,14 @@
 
 <div class="h-full">
     {% comment %}Chat image modal{% endcomment %}
-    <div id="chat__imageModal" class="fixed w-full max-w-screen-2xl mx-auto h-screen top-0 left-0 opacity-0">
-        <div id="close__chatImageModal" class="absolute right-2 top-2 cursor-pointer z-20">
-            <span class="iconify text-lg" data-icon="ep:close-bold"></span>
+    {% include "chat/chatImageModal.html" %}
+
+    <div id="video__callModal" class="fixed top-0 left-0 w-full h-screen opacity-0">
+        <div class="absolute top-[50%] left-[50%] w-1/2 h-[70vh]">
+            <video id="sender__video" src="" class="w-full h-full object-cover"></video>
         </div>
-        <div class="w-[70%] h-[70%] absolute top-[50%] left-[50%]">
-            <img class="w-full h-full object-contain chat__selectedImg" src="" alt="">
+        <div class="absolute bottom-2 right-2 w-[5rem] h-[7rem] rounded-lg">
+            <video id="receiver__video" src="" class="w-full h-full object-cover rounded-lg"></video>
         </div>
     </div>
 
@@ -53,7 +55,7 @@
                                         {% else %}
                                             <a class="flex items-center gap-x-1 text-sky-500" href="{{ file.2.url }}" download>
                                                 <span class="iconify download__icon" data-icon="eva:download-fill"></span>
-                                                <p class="chat__file">{{ file.0 }}.{{ file.1 }}</p>
+                                                <p class="break-all chat__file">{{ file.0 }}.{{ file.1 }}</p>
                                             </a>
                                         {% endif %}
                                     {% endwith %}

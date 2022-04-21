@@ -12,7 +12,7 @@ import json
 
 # If email session exist, redirect to homepage
 def check_session_exist(request):
-    print(request.session.get("email", None))
+    # print(request.session.get("email", None))
 
     email = request.session.get("email", None)
 

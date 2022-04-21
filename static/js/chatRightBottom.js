@@ -128,7 +128,7 @@ $(document).ready(() => {
             downloadIcon.setAttribute("data-icon", "eva:download-fill");
 
             const fileInfo = document.createElement("p");
-            fileInfo.setAttribute("class", "chat__file");
+            fileInfo.setAttribute("class", "break-all chat__file");
             fileInfo.innerText = data.file_names[i];
 
             downloadedFile.appendChild(downloadIcon);
@@ -206,7 +206,13 @@ $(document).ready(() => {
         })
         chatObj["file_names"] = fileNameArr;
         chatObj["file_extensions"] = fileExtensionArr;
-        newSocket.emit("create-message", chatObj);
+        newSocket.emit("create-message", {
+          "id": chatObj.id,
+          "sender": chatObj.sender,
+          "receiver": chatObj.receiver,
+          "created_at": chatObj.created_at,
+          "type": "files"
+        });
       }
 
       const sender = chatObj.sender;
@@ -284,6 +290,8 @@ $(document).ready(() => {
             createMessage(email, psid, data, info.audio)
           } else if (data.files) {
             createMessage(email, psid, data, info.files);
+            // Close file sending modal
+            $("#chat__fileSendingModal").removeClass("show__chatFileSendingModal");
           }
         }
       })
@@ -394,7 +402,13 @@ $(document).ready(() => {
   fileInput.onchange = (e) => {
     if (e.target.files.length > 0) {
       const files = [...e.target.files];
+      $("#chat__fileSendingModal").addClass("show__chatFileSendingModal");
       sendMessage({files: files, type: "files"});
     }
   }
 });
+
+// Close file sending modal
+const closeFileSendingModal = () => {
+  $("#chat__fileSendingModal").removeClass("show__chatFileSendingModal");
+}

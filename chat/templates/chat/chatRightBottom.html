@@ -16,13 +16,10 @@
 
 <div class="bg-slate-700 p-3 relative rounded">
     {% comment %}Record modal{% endcomment %}
-    <div id="chat__rightVoiceModal" class="fixed w-full max-w-screen-2xl mx-auto h-screen top-0 left-0 opacity-0">
-        <div class="absolute top-[50%] left-[50%] w-1/2 h-60 bg-white shadow z-50 rounded">
-            <div id="close__voiceModal" class="absolute top-1 right-1 cursor-pointer">
-                <span class="iconify text-lg text-rose-500" data-icon="ep:close-bold"></span>
-            </div>
-        </div>
-    </div>
+    {% include "chat/voiceRecordModal.html" %}
+
+    {% comment %}File sending modal{% endcomment %}
+    {% include "chat/fileSendingModal.html" %}
 
     <div class="flex items-center justify-between gap-x-5">
         <div class="flex items-center gap-x-3">

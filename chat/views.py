@@ -10,7 +10,8 @@ from .models import *
 from django.http import JsonResponse, HttpResponse
 import random
 import string
-import json, time
+import json
+import time
 from copy import deepcopy
 
 
@@ -91,17 +92,17 @@ class ChatroomView(View):
         # chat_list = list(map(lambda i: i, chats))
         chat_list = list(
             map(
-                lambda i: {"id": i.id, \
-                    "sender_id": i.sender.id, \
-                    "receiver_id": i.receiver.id, \
-                    "room": i.room, \
-                    "chatroom_id": i.chatroom.id, \
-                    "message": i.message, \
-                    "audio": i.audio, \
-                    "files": i.files, \
-                    "created_at": i.created_at.strftime("%b %d, %Y %I:%M %p")}, chats
-                )
+                lambda i: {"id": i.id,
+                           "sender_id": i.sender.id,
+                           "receiver_id": i.receiver.id,
+                           "room": i.room,
+                           "chatroom_id": i.chatroom.id,
+                           "message": i.message,
+                           "audio": i.audio,
+                           "files": i.files,
+                           "created_at": i.created_at.strftime("%b %d, %Y %I:%M %p")}, chats
             )
+        )
 
         # print(chat_list)
 
@@ -115,11 +116,22 @@ class ChatroomView(View):
             copiedChatList, account_list, itemList, room_slug)
 
         quick_sort(matchedChatList, "id", 0, len(matchedChatList) - 1)
-
         # print(matchedChatList)
+
+        sender_obj, receiver_obj = None, None
+        
+        if matchedChatList:
+            sender_obj = matchedChatList[0]["sender"]
+            receiver_obj = matchedChatList[0]["receiver"]
+
+        print(sender_obj)
+        print(receiver_obj)
+
         args = {
             "accounts": accounts,
             "chats": matchedChatList,
+            "sender_obj": sender_obj,
+            "receiver_obj": receiver_obj
         }
         return render(request, "chat/chat.html", args)
 
@@ -211,6 +223,8 @@ def get_message_sender_and_receiver(chatroom_obj, account_obj, account_list):
     return sender, receiver
 
 # Check if user change or delete localstorage email value
+
+
 def check_for_sender_email(sender_email, my_email):
     if sender_email is None:
         return True, "email_delete"
@@ -237,7 +251,7 @@ def find_room_all_objects(room_slug, myself_email):
         return found_chatroom_obj, found_account_obj, account_list
     return None, None, None
 
-#### Only for text message ####
+
 class MessageView(View):
     @method_decorator(is_user_logged_in())
     def post(self, request, room_slug):
@@ -246,17 +260,18 @@ class MessageView(View):
         audio = request.FILES.get("audio", None)
         files = request.FILES.getlist("files", None)
 
-        print(sender_email)
-        print(message)
-        print(audio)
-        print(files)
+        # print(sender_email)
+        # print(message)
+        # print(audio)
+        # print(files)
 
         if message is not None:
             message = message.strip()
 
         myself_email = request.session.get("email", None)
 
-        email_changed, email_status = check_for_sender_email(sender_email, myself_email)
+        email_changed, email_status = check_for_sender_email(
+            sender_email, myself_email)
 
         if email_changed:
             if email_status == "email_change":
@@ -270,7 +285,8 @@ class MessageView(View):
                     "email": myself_email
                 })
 
-        found_chatroom_obj, found_account_obj, account_list = find_room_all_objects(room_slug, myself_email)
+        found_chatroom_obj, found_account_obj, account_list = find_room_all_objects(
+            room_slug, myself_email)
 
         if found_chatroom_obj is not None and found_account_obj is not None and account_list is not None:
             if found_account_obj is not None:
@@ -341,23 +357,114 @@ class MessageView(View):
         })
 
 
+# Getting chat object, sender and receiver object
+def find_chat_obj(chat_list, key, target, start, chat_list_length, account_list):
+    found_chat_obj_index = binary_search(
+        chat_list, key, target, start, chat_list_length - 1)
+
+    if found_chat_obj_index > -1:
+        found_chat_obj = chat_list[found_chat_obj_index]
+        found_sender_obj_index = binary_search(
+            account_list, "id", found_chat_obj["sender_id"], 0, len(account_list) - 1)
+        found_receiver_obj_index = binary_search(
+            account_list, "id", found_chat_obj["receiver_id"], 0, len(account_list) - 1)
+        if found_sender_obj_index > -1 and found_receiver_obj_index > -1:
+            sender_obj = account_list[found_sender_obj_index]
+            receiver_obj = account_list[found_receiver_obj_index]
+            return found_chat_obj, sender_obj, receiver_obj
+    return None, None, None
+
+
+# Get request for file receiving
 class FetchFileRequest(View):
+    @method_decorator(is_user_logged_in())
     def get(self, request, pk):
-        chat_obj = Chat.objects.get(pk=pk)
+        accounts = Account.objects.values()
+        account_list = list(map(lambda i: i, accounts))
 
-        files = []
-        for file in chat_obj.files.all():
-            x = str(file.file)
-            files.append({"id": file.id, "file": x})
+        chats = Chat.objects.all()
+        chat_list = list(
+            map(
+                lambda i: {"id": i.id,
+                           "sender_id": i.sender.id,
+                           "receiver_id": i.receiver.id,
+                           "room": i.room,
+                           "chatroom_id": i.chatroom.id,
+                           "message": i.message,
+                           "audio": i.audio,
+                           "files": i.files,
+                           "created_at": i.created_at.strftime("%b %d, %Y %I:%M %p")}, chats
+            )
+        )
 
-        print(files)
+        quick_sort(chat_list, "id", 0, len(chat_list) - 1)
+        quick_sort(account_list, "id", 0, len(account_list) - 1)
+
+        found_chat_obj, found_sender_obj, found_receiver_obj = find_chat_obj(
+            chat_list, "id", pk, 0, len(chat_list), account_list)
+        # print(found_chat_obj)
+
+        files = list(
+            map(
+                lambda file: {
+                    "id": file.id,
+                    "file": str(file.file)
+                },
+                found_chat_obj["files"].all()
+            )
+        )
 
         return JsonResponse({
-            "sender": chat_obj.sender.username,
-            "receiver": chat_obj.receiver.email,
+            "sender": json.dumps({
+                "username": found_sender_obj["username"],
+                "email": found_sender_obj["email"],
+            }),
+            "receiver": json.dumps({
+                "username": found_receiver_obj["username"],
+                "email": found_receiver_obj["email"],
+            }),
             "files": json.dumps(files),
-            "created_at": chat_obj.created_at
+            "created_at": found_chat_obj["created_at"]
         })
+
+
+# While calling the receiver, get all the info of the receiver object
+class FetchReceiverCaller(View):
+    @method_decorator(is_user_logged_in())
+    def get(self, request, pk):
+        accounts = Account.objects.values()
+        account_list = list(map(lambda i: i, accounts))
+
+        myself_email = request.session.get("email")
+        sender_obj = None
+
+        # Finding sender object
+        if myself_email is not None:
+            account_list, sender_obj = find_object(account_list, "email", myself_email, 0, len(account_list))
+
+        # Finding receiver obj
+        account_list, receiver_obj = find_object(account_list, "id", pk, 0, len(account_list))
+
+        if sender_obj is not None and receiver_obj is not None:
+            json_response = {
+                "sender": {
+                    "id": sender_obj["id"],
+                    "email": sender_obj["email"],
+                    "username": sender_obj["username"],
+                    "is_active": sender_obj["is_active"]
+                },
+                "receiver": {
+                    "id": receiver_obj["id"],
+                    "email": receiver_obj["email"],
+                    "username": receiver_obj["username"],
+                    "is_active": receiver_obj["is_active"]
+                }
+            }
+            return JsonResponse(json_response)
+        else:
+            return JsonResponse({
+                "invalid_request": True
+            })
 
 
 class LogoutView(View):
