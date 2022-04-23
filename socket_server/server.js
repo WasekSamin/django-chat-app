@@ -51,16 +51,16 @@ io.on("connection", (socket) => {
   });
 
   // Create and receiver call
-  socket.on("create-call", callObj => {
-    console.log(callObj);
+  socket.on("create-call", (callObj) => {
+    console.log("CREATING CALL:", callObj);
     if (callObj) {
       const room = callObj.receiver.email;
       socket.to(room).emit("receive-call", callObj);
     }
   });
 
-  // After the call is received by received
-  socket.on("call-received", callObj => {
+  // After the call is received by receiver
+  socket.on("call-received", (callObj) => {
     console.log(callObj);
 
     if (callObj) {
@@ -70,15 +70,59 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("call-rejected", callObj => {
+  // Call rejecting
+  socket.on("call-rejected", (callObj) => {
     if (callObj) {
       const room = callObj.sender.email;
       socket.to(room).emit("receiver-rejected-call", callObj);
     }
+  });
+
+  // If receiver already on a call
+  socket.on("already-on-call", callObj => {
+    console.log("ALREADY ON CALL:", callObj);
+    if (callObj) {
+      const room = callObj.sender.email;
+      socket.to(room).emit("receiver-already-on-call", callObj);
+    }
   })
 
+  // Leave call on both sender and receiver side
+  socket.on("leave-call", (callObj) => {
+    console.log(callObj);
+    if (callObj) {
+      const room = callObj.receiver.email;
+      // Receiver side
+      socket.to(room).emit("leave-call-on-receiver-side", callObj);
+      // Sender side
+      socket.emit("leave-call-on-sender-side", callObj);
+    }
+  });
+
+  // Video on/off on both sender and receiver side
+  socket.on("video-mode-option", callObj => {
+    console.log(callObj);
+    if(callObj) {
+      const room = callObj.receiver.email;
+      // Receiver side
+      socket.to(room).emit("video-mode-on-receiver-side", callObj);
+      socket.emit("video-mode-on-sender-side", callObj);
+    }
+  });
+
+  // Audio on/off on both sender and receiver side
+  socket.on("audio-mode-option", callObj => {
+    console.log(callObj);
+    if(callObj) {
+      const room = callObj.receiver.email;
+      // Receiver side
+      socket.to(room).emit("audio-mode-on-receiver-side", callObj);
+      socket.emit("audio-mode-on-sender-side", callObj);
+    }
+  });
+
   // Create and receive a new voice message
-  socket.on("create-voice-message", chatObj => {
+  socket.on("create-voice-message", (chatObj) => {
     console.log(chatObj);
-  })
+  });
 });

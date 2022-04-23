@@ -96,12 +96,30 @@
   transition: all 0.3s ease-in-out;
 }
 
+/* Video call options */
+#call__options {
+  transform: translateX(-50%);
+}
+
 @keyframes fileLoadingSpinner {
   from {
     transform: rotate(0deg);
   }
   to {
     transform: rotate(360deg)
+  }
+}
+
+@media (min-width: 1536px) {
+  #video__callModal {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+@media (max-height: 600px) {
+  .sender__videoCallDiv {
+    height: 60vh;
   }
 }
 

@@ -37,5 +37,9 @@
     {% include "chat/receiveCallModal.html" %}
 
     {% block content %}{% endblock %}
+
+    <audio id="caller__tune" muted="true">
+      <source src="{% static 'audio/caller_tune.mp3' %}" type="audio/mpeg" />
+    </audio>
   </body>
 </html>

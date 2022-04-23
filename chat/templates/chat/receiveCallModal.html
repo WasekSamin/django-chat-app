@@ -1,7 +1,7 @@
 <div id="receive__callingModal" class="fixed top-0 left-0 w-full max-w-screen-2xl mx-auto h-screen opacity-0">
     <div class="absolute top-[50%] left-[50%] w-[85%] sm:w-[70%] md:w-1/2 py-5 bg-slate-700 z-50 rounded shadow px-3">
         <div class="flex flex-col justify-center items-center gap-y-5">
-            <p class="font-semibold">Getting call from <span id="sender__call">Someone</span>...</p>
+            <p class="font-semibold">Getting call from <span id="sender__call">{% if request.session.email is not None and request.session.email == sender_obj.email %}{{ receiver_obj.username }}{% else %}{{ sender_obj.username }}{% endif %}</span>...</p>
             <div class="w-full flex flex-wrap items-center justify-between gap-3">
                 <button onclick="answerCall()" class="flex-1 px-5 py-2 bg-green-500 text-white hover:bg-green-700 rounded shadow transition-all duration-300 ease-in-out">Answer</button>
                 <button onclick="rejectCall()" class="flex-1 px-5 py-2 bg-rose-500 text-white hover:bg-rose-700 rounded shadow transition-all duration-300 ease-in-out">Reject</button>

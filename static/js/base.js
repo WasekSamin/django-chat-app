@@ -1,6 +1,9 @@
 const p = localStorage.getItem("PSID");
 const e = localStorage.getItem("email");
 let onVideoCall = false;
+let peer = null;
+let senderVideoStream = null, 
+    receiverVideoStream = null;
 
 let sender_obj = null,
   receiver_obj = null,
@@ -18,13 +21,22 @@ const setSocketConnection = (psid, email) => {
     newSocket.on("on-socket-exist", (socketId) => {
       newSocket.id = socketId;
     });
+
     // Receiving call request
     newSocket.on("receive-call", (callObj) => {
       sender_obj = callObj.sender;
       receiver_obj = callObj.receiver;
       roomLocation = callObj.roomLink;
 
-      $("#receive__callingModal").addClass("show__receiveCallingModal");
+        if (!onVideoCall) {
+            $("#receive__callingModal").addClass("show__receiveCallingModal");
+        
+        } else {
+            newSocket.emit("already-on-call", callObj);
+        }
+
+    //   $("#caller__tune")[0].muted = false;
+    //   $("#caller__tune")[0].play();
     });
   });
 
@@ -43,6 +55,10 @@ const answerCall = () => {
         }
     });
 
+    // $("#caller__tune")[0].muted = true;
+    // $("#caller__tune")[0].pause();
+    // $("#caller__tune")[0].currentTime = 0;
+
     newSocket.on("connect", () => {
         newSocket.emit("socket-exist", p);
         newSocket.on("on-socket-exist", socketId => {
@@ -60,44 +76,51 @@ const answerCall = () => {
             onVideoCall = true;
 
             if (callObj.receiver.id === receiver_obj.id) {
-                if (roomLocation !== window.location.href) {
-                    window.location.href = roomLocation;
-                } else {
+                if (roomLocation !== window.location.href) {    // If the receiver is not in the chatroom
+                    localStorage.setItem("onCall", true);
+                    localStorage.setItem("caller_sender_id", callObj.sender.id);
+                    localStorage.setItem("caller_receiver_id", callObj.receiver.id);
+                    window.location.href = roomLocation;    // Navigate to the caller chatroom
+                } else {    // If the receiver is in the chatroom
                     // Hide the receiver side call modal after call is being answered
                     $("#receive__callingModal").removeClass("show__receiveCallingModal");
-
+                    
+                    // Connecting call on receiver side
                     if (onVideoCall) {
-                        console.log(callObj);
                         let room = callObj.roomLink.split("/");
                         room = room[room.length - 2];
 
                         const senderPeerId = `${room}-${callObj.sender.id}`;
                         const receiverPeerId = `${room}-${callObj.receiver.id}`;
 
-                        console.log(senderPeerId, receiverPeerId);
+                        // If there is any peer connection from the past, disconnect that
+                        if (peer) {
+                            peer.disconnect();
+                        }
 
-                        const peer = new Peer(receiverPeerId);
+                        peer = new Peer(receiverPeerId);
                         const myVideo = document.getElementById("sender__video");
                         const otherUserVideo = document.getElementById("receiver__video");
-
+                        
                         peer.on("open", id => {
-                            console.log(peer);
-                            console.log(id);
-
-                             $("#video__callModal").addClass("show__videoCallModal");
+                            $("#video__callModal").addClass("show__videoCallModal");
 
                             myVideo.muted = true;
 
                             navigator.mediaDevices.getUserMedia({
-                                video: true,
+                                video: {
+                                    facingMode: "user"
+                                },
                                 audio: true
                             }).then(stream => {
-                                addVideoStream(otherUserVideo, stream);
+                                senderVideoStream = stream;
+                                addVideoStream(myVideo, stream);
 
                                 peer.on("call", call => {
                                     call.answer(stream);
 
                                     call.on("stream", userVideoStream => {
+                                        receiverVideoStream = userVideoStream;
                                         addVideoStream(otherUserVideo, userVideoStream);
                                     });
                                 });
@@ -118,7 +141,10 @@ const answerCall = () => {
                             const call = peer.call(userId, stream);
 
                             call.on('stream', userVideoStream => {
-                                addVideoStream(myVideo, userVideoStream);
+                                if (!receiverVideoStream) {
+                                    receiverVideoStream = userVideoStream;
+                                }
+                                addVideoStream(otherUserVideo, userVideoStream);
                             });
                             
                             call.on('close', () => {
@@ -143,6 +169,10 @@ const rejectCall = () => {
             SID: e
         }
     });
+
+    // $("#caller__tune")[0].muted = true;
+    // $("#caller__tune")[0].pause();
+    // $("#caller__tune")[0].currentTime = 0;
 
     newSocket.on("connect", () => {
         newSocket.emit("socket-exist", p);

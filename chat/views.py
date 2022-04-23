@@ -18,10 +18,15 @@ from copy import deepcopy
 class ChatHomeView(View):
     @method_decorator(is_user_logged_in())
     def get(self, request):
-        accounts = Account.objects.all()
+        accounts = Account.objects.values()
+        myself_email = request.session.get("email", None)
+
+        account_list = list(map(lambda i: i, accounts))
+        account_list, sender_obj = find_object(account_list, "email", myself_email, 0, len(account_list))
 
         args = {
             "accounts": accounts,
+            "sender_obj": sender_obj
         }
         return render(request, "chat/home.html", args)
 
@@ -116,16 +121,38 @@ class ChatroomView(View):
             copiedChatList, account_list, itemList, room_slug)
 
         quick_sort(matchedChatList, "id", 0, len(matchedChatList) - 1)
-        # print(matchedChatList)
 
         sender_obj, receiver_obj = None, None
         
         if matchedChatList:
             sender_obj = matchedChatList[0]["sender"]
             receiver_obj = matchedChatList[0]["receiver"]
+        else:
+            chatrooms = Chatroom.objects.values()
+            chatroom_list = list(map(lambda i: i, chatrooms))
 
-        print(sender_obj)
-        print(receiver_obj)
+            _, chatroom_obj = find_object(chatroom_list, "room_slug", room_slug, 0, len(chatroom_list))
+            
+            if chatroom_obj is not None:
+                _, user1_obj = find_object(account_list, "id", chatroom_obj["user1_id"], 0, len(account_list))
+                _, user2_obj = find_object(account_list, "id", chatroom_obj["user2_id"], 0, len(account_list))
+
+                if user1_obj is not None and user2_obj is not None:
+                    myself_email = request.session.get("email", None)
+
+                    if user1_obj["email"] == myself_email:
+                        sender_obj = user1_obj
+                        receiver_obj = user2_obj
+                    else:
+                        sender_obj = user2_obj
+                        receiver_obj = user1_obj
+                else:
+                    return HttpResponse("Invlaid request! Please try again...")
+            else:
+                return HttpResponse("Invlaid request! Please try again...")
+
+        # print(sender_obj)
+        # print(receiver_obj)
 
         args = {
             "accounts": accounts,
@@ -461,10 +488,87 @@ class FetchReceiverCaller(View):
                 }
             }
             return JsonResponse(json_response)
-        else:
-            return JsonResponse({
-                "invalid_request": True
-            })
+        return JsonResponse({
+            "invalid_request": True
+        })
+
+
+# Finding the chatroom, user1 and user2 object
+def find_chatroom_all_obj(chatroom_list, key, target, start, chatroom_lst_length, account_list):
+    found_chatroom_obj_index = binary_search(chatroom_list, key, target, start, chatroom_lst_length - 1)
+
+    if found_chatroom_obj_index > -1:
+        chatroom_obj = chatroom_list[found_chatroom_obj_index]
+        user1_obj_index = binary_search(account_list, "id", chatroom_obj["user1_id"], 0, len(account_list) - 1)
+        user2_obj_index = binary_search(account_list, "id", chatroom_obj["user2_id"], 0, len(account_list) - 1)
+
+        if user1_obj_index > -1 and user2_obj_index > -1:
+            user1_obj = account_list[user1_obj_index]
+            user2_obj = account_list[user2_obj_index]
+
+            return chatroom_obj, user1_obj, user2_obj
+        return None, None, None
+    return None, None, None
+    
+
+# While selecting a video call option, fetch sender and receiver info
+class FetchCallOptionUserInfo(View):
+    @method_decorator(is_user_logged_in())
+    def post(self, request, room_slug):
+        leave_call = request.POST.get("leaveCall", None)
+        audio_mode = request.POST.get("audioModeOn", None)
+        video_mode = request.POST.get("videoModeOn", None)
+
+        chatrooms = Chatroom.objects.values()
+        chatroom_list = list(map(lambda i: i, chatrooms))
+
+        accounts = Account.objects.values()
+        account_list = list(map(lambda i: i, accounts))
+
+        myself_email = request.session.get("email", None)
+        
+        quick_sort(chatroom_list, "room_slug", 0, len(chatroom_list) - 1)
+        quick_sort(account_list, "id", 0, len(account_list) - 1)
+
+        # Getting chatroom, user1 and user2 object
+        chatroom_obj, user1_obj, user2_obj = find_chatroom_all_obj(chatroom_list, "room_slug", room_slug, 0, len(chatroom_list), account_list)
+        
+        if chatroom_obj is not None and user1_obj is not None and user2_obj is not None:
+            # Getting sender and receiver object
+            sender_obj, receiver_obj = None, None
+            if user1_obj["email"] == myself_email:
+                sender_obj = user1_obj
+                receiver_obj = user2_obj
+            else:
+                sender_obj = user2_obj
+                receiver_obj = user1_obj
+
+            json_response = {
+                "room": chatroom_obj["room_slug"],
+                "sender": {
+                    "username": sender_obj["username"],
+                    "email": sender_obj["email"]
+                },
+                "receiver": {
+                    "username": receiver_obj["username"],
+                    "email": receiver_obj["email"]
+                },
+            }
+
+            if leave_call:
+                json_response["call_option_type"] = "leave"
+            elif audio_mode is not None:
+                json_response["audio_mode"] = audio_mode
+                json_response["call_option_type"] = "audio"
+            elif video_mode is not None:
+                json_response["video_mode"] = video_mode
+                json_response["call_option_type"] = "video"
+
+            return JsonResponse(json_response, safe=False)
+        JsonResponse({
+            "invalid_request": True
+        })
+
 
 
 class LogoutView(View):

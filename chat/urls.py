@@ -13,5 +13,7 @@ urlpatterns = [
     path("file-request/<int:pk>/", FetchFileRequest.as_view(), name="file-request"),
     # To check if the user is valid
     path("check-receiver/<int:pk>/", FetchReceiverCaller.as_view(), name="check-receiver"),
+    # While leave call, fetch sender and user info
+    path("call-options/<str:room_slug>/", FetchCallOptionUserInfo.as_view(), name="leave-call"),
     path("logout/", LogoutView.as_view(), name="logout"),
 ]

@@ -5,6 +5,7 @@ $(document).ready(() => {
   });
 });
 
+let videoModeOn = true, audioModeOn = true;
 
 // Appending new message
 const appendMessage = (senderUsername, firstLetter, secondLetter, chatObj) => {
@@ -51,7 +52,6 @@ const appendMessage = (senderUsername, firstLetter, secondLetter, chatObj) => {
 
     fetch(`/file-request/${chatObj.id}/`)
     .then(res => {
-      console.log(res);
       if (res.ok) {
         return res.json();
       }
@@ -132,6 +132,16 @@ const appendMessage = (senderUsername, firstLetter, secondLetter, chatObj) => {
   });
 }
 
+const toggleVideoCam = (stream, videoMode) => {
+  let videoTrack = stream.getTracks().find(track => track.kind === "video");
+  videoTrack.enabled = JSON.parse(videoMode);
+}
+
+const toggAudioCam = (stream, audioMode) => {
+  let audioTrack = stream.getTracks().find(track => track.kind === "audio");
+  audioTrack.enabled = JSON.parse(audioMode);
+}
+
 // Receiver message via socket
 const receiveMessage = (email, psid) => {
   const newSocket = io("http://localhost:9000", {
@@ -163,6 +173,22 @@ const receiveMessage = (email, psid) => {
 
       appendMessage(senderUsername, firstLetter, secondLetter, chatObj);
     });
+
+    // Leave call on the receiver side
+    newSocket.on("leave-call-on-receiver-side", callObj => {
+      peer.disconnect();
+      window.location.reload();
+    });
+
+    // Video on/off at receiver side
+    newSocket.on("video-mode-on-receiver-side", callObj => {
+      toggleVideoCam(receiverVideoStream, callObj.videoMode);
+    });
+
+    // Audio on/off at receiver side
+    newSocket.on("audio-mode-on-receiver-side", callObj => {
+      toggAudioCam(receiverVideoStream, callObj.audioMode);
+    });
   });
 
   return () => newSocket.close();
@@ -182,4 +208,279 @@ const showChatImageModal = (img) => {
 $("#close__chatImageModal").click(() => {
   $("#chat__imageModal").removeClass("show__chatImageModal");
   $(".chat__selectedImg").attr("src", "");
-})
+});
+
+// After receiver received the call and navigated to the chatroom
+// Connecting call on the receiver side
+const onCall = localStorage.getItem("onCall");
+const sender_id = localStorage.getItem("caller_sender_id");
+const receiver_id = localStorage.getItem("caller_receiver_id");
+
+if (onCall && sender_id && receiver_id) {
+  onVideoCall = true;
+
+  // Hide the receiver side call modal after call is being answered
+  $("#receive__callingModal").removeClass("show__receiveCallingModal");
+
+  // Connecting call on receiver side
+  if (onVideoCall) {
+      let room = window.location.href.split("/");
+      room = room[room.length - 2];
+
+      const senderPeerId = `${room}-${sender_id}`;
+      const receiverPeerId = `${room}-${receiver_id}`;
+
+      // If there is any peer connection from the past, disconnect that
+      if (peer) {
+        peer.disconnect();
+      }
+
+      peer = new Peer(receiverPeerId);
+      const myVideo = document.getElementById("sender__video");
+      const otherUserVideo = document.getElementById("receiver__video");
+
+      peer.on("open", id => {
+          // Clearing localstorage value so that the video does not open on every page reload
+          localStorage.removeItem("onCall");
+          localStorage.removeItem("caller_sender_id");
+          localStorage.removeItem("caller_receiver_id");
+
+          $("#video__callModal").addClass("show__videoCallModal");
+
+          myVideo.muted = true;
+
+          navigator.mediaDevices.getUserMedia({
+              video: {
+                facingMode: "user"
+              },
+              audio: true
+          }).then(stream => {
+              senderVideoStream = stream;
+              addVideoStream(myVideo, stream);
+
+              peer.on("call", call => {
+                  call.answer(stream);
+
+                  call.on("stream", userVideoStream => {
+                      if (!receiverVideoStream) {
+                        receiverVideoStream = userVideoStream;
+                      }
+                      addVideoStream(otherUserVideo, userVideoStream);
+                  });
+              });
+
+              connectToNewUser(senderPeerId, stream);
+          }).catch(err => console.error(err));
+      });
+
+      function addVideoStream(video, stream) {
+          video.srcObject = stream;
+
+          video.addEventListener('loadedmetadata', () => {
+              video.play();
+          });
+      }
+
+      function connectToNewUser(userId, stream) {
+          const call = peer.call(userId, stream);
+
+          call.on('stream', userVideoStream => {
+              if (!receiverVideoStream) {
+                receiverVideoStream = userVideoStream;
+              }
+              addVideoStream(otherUserVideo, userVideoStream);
+          });
+          
+          call.on('close', () => {
+              video.remove();
+          });
+      
+          // peers[userId] = call
+      }
+  }
+}
+
+// Get csrf token cookie value
+const getCookie = (name) => {
+  var cookieValue = null;
+  if (document.cookie && document.cookie != "") {
+    var cookies = document.cookie.split(";");
+    for (var i = 0; i < cookies.length; i++) {
+      var cookie = cookies[i].trim();
+      // Does this cookie string begin with the name we want?
+      if (cookie.substring(0, name.length + 1) == name + "=") {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+};
+
+// Fetching user1 and user2 object of chatroom to leave the call
+const fetchCallOptionUsersInfo = async(room, socket, info) => {
+  const CSRFTOKEN = getCookie("csrftoken");
+
+  let formData = new FormData();
+  if (info.type === "leaveCall") {
+    formData.append("leaveCall", info.leaveCall);
+  } else if (info.type === "audioMode") {
+    formData.append("audioModeOn", info.audioModeOn);
+  } else if (info.type === "videoMode") {
+    formData.append("videoModeOn", info.videoModeOn);
+  }
+
+  await fetch(`/call-options/${room}/`, {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": CSRFTOKEN
+    },
+    body: formData
+  })
+  .then(res => {
+    if (res.ok) {
+      return res.json();
+    } else {
+      alert("Invalid request! Please try again...");
+    }
+  }).then(data => {
+    if (data) {
+      if (data.invalid_request) {
+        alert("Invalid request! Please try again...");  
+      } else if (data.call_option_type === "leave") { // Leave call on both side
+        socket.emit("leave-call", {
+          sender: data.sender,
+          receiver: data.receiver
+        });
+
+        socket.on("leave-call-on-sender-side", callObj => {
+          // Leave call on the sender side
+          if (callObj.sender.id === data.sender.id) {
+            peer.disconnect();
+            window.location.reload();
+          }
+        });
+      } else if (data.call_option_type === "audio") { // Audio on/off option on both side
+        socket.emit("audio-mode-option", {
+          sender: data.sender,
+          receiver: data.receiver,
+          audioMode: data.audio_mode
+        });
+
+        // Audio on/off at sender side
+        socket.on("audio-mode-on-sender-side", callObj => {
+          if (callObj.sender.id === data.sender.id) {
+            toggAudioCam(senderVideoStream, data.audio_mode);
+            if (JSON.parse(data.audio_mode)) {
+              $("#audio__optionBtn").css("background-color", "rgb(51 65 85)");
+              $("#audio__optionIcon").attr("data-icon", "ant-design:audio-outlined");
+            } else {
+              $("#audio__optionBtn").css("background-color", "rgb(244 63 94)");
+              $("#audio__optionIcon").attr("data-icon", "ant-design:audio-muted-outlined");
+            }
+          }
+        });
+      } else if (data.call_option_type === "video") { // Video on/off option on both side
+        socket.emit("video-mode-option", {
+          sender: data.sender,
+          receiver: data.receiver,
+          videoMode: data.video_mode
+        });
+
+        // Video on/off at sender side
+        socket.on("video-mode-on-sender-side", callObj => {
+          if (callObj.sender.id === data.sender.id) {
+            toggleVideoCam(senderVideoStream, data.video_mode);
+            if (JSON.parse(data.video_mode)) {
+              $("#video__optionBtn").css("background-color", "rgb(51 65 85)");
+              $("#video__optionIcon").attr("data-icon", "bi:camera-video");
+            } else {
+              $("#video__optionBtn").css("background-color", "rgb(244 63 94)");
+              $("#video__optionIcon").attr("data-icon", "bi:camera-video-off");
+            }
+          }
+        });
+      }
+    } else {
+      alert("Invalid request! Please try again...");
+    }
+  }).catch(err => console.error(err));
+}
+
+$("#leave__callBtn").click(() => {
+  if (psid && email) {
+    const newSocket = io("http://localhost:9000", {
+      query: {
+        SID: email
+      }
+    });
+
+    newSocket.on("connect", () => {
+      newSocket.emit("socket-exist", psid);
+      newSocket.on("on-socket-exist", socketId => {
+        newSocket.id = socketId;
+      });
+
+      let room = window.location.href.split("/");
+      room = room[room.length - 2];
+
+      fetchCallOptionUsersInfo(room, newSocket, {leaveCall: true, "type": "leaveCall"});
+    });
+
+    return () => newSocket.close();
+  }
+});
+
+// Video mode option click
+$("#video__optionBtn").click(() => {
+  if (psid && email) {
+    const newSocket = io("http://localhost:9000", {
+      query: {
+        SID: email
+      }
+    });
+
+    videoModeOn = !videoModeOn;
+
+    newSocket.on("connect", () => {
+      newSocket.emit("socket-exist", psid);
+      newSocket.on("on-socket-exist", socketId => {
+        newSocket.id = socketId;
+      });
+
+      let room = window.location.href.split("/");
+      room = room[room.length - 2];
+
+      fetchCallOptionUsersInfo(room, newSocket, {videoModeOn: videoModeOn, type: "videoMode"});
+    });
+
+    return () => newSocket.close();
+  }
+});
+
+// Audio mode option click
+$("#audio__optionBtn").click(() => {
+  if (psid && email) {
+    const newSocket = io("http://localhost:9000", {
+      query: {
+        SID: email
+      }
+    });
+
+    audioModeOn = !audioModeOn;
+
+    newSocket.on("connect", () => {
+      newSocket.emit("socket-exist", psid);
+      newSocket.on("on-socket-exist", socketId => {
+        newSocket.id = socketId;
+      });
+
+      let room = window.location.href.split("/");
+      room = room[room.length - 2];
+
+      fetchCallOptionUsersInfo(room, newSocket, {audioModeOn: audioModeOn, type: "audioMode"});
+    });
+
+    return () => newSocket.close();
+  }
+});

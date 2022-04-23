@@ -20,45 +20,65 @@ const makeCall = (psid, sender, receiver) => {
             receiver: receiver,
             roomLink: window.location.href,
         });
+
+        // If receiver already on call
+        newSocket.on("receiver-already-on-call", callObj => {
+            $("#calling__modal").removeClass("show__callingModal");
+            $("#calling__modal").addClass("show__callingModal");
+            $("#sender__callingText").addClass("hidden");
+            $("#sender__callingFailedText").removeClass("hidden");
+            setTimeout(() => {
+                $("#calling__modal").removeClass("show__callingModal");
+                $("#sender__callingText").removeClass("hidden");
+                $("#sender__callingFailedText").addClass("hidden");
+            }, 2000);
+        })
     });
 
     // If receiver answered the call
     newSocket.on("receiver-accept-call", callObj => {
-        console.log(callObj);
         $("#calling__modal").removeClass("show__callingModal");
 
         onVideoCall = true;
-
+        
+        // Connecting call on sender side
         if (onVideoCall) {
             let room = callObj.roomLink.split("/");
             room = room[room.length - 2];
             const senderPeerId = `${room}-${callObj.sender.id}`;
             const receiverPeerId = `${room}-${callObj.receiver.id}`;
-            console.log(senderPeerId, receiverPeerId);
 
-            const peer = new Peer(senderPeerId);
+            // If there is any peer connection from the past, disconnect that
+            if (peer) {
+                peer.disconnect();
+            }
+
+            peer = new Peer(senderPeerId);
             const myVideo = document.getElementById("sender__video");
             const otherUserVideo = document.getElementById("receiver__video");
-
+            
             peer.on("open", id => {
-                console.log(peer);
-                console.log(id);
-
                 $("#video__callModal").addClass("show__videoCallModal");
 
                 myVideo.muted = true;
 
                 navigator.mediaDevices.getUserMedia({
-                    video: true,
+                    video: {
+                        facingMode: "user"
+                    },
                     audio: true,
                 }).then(stream => {
-                    addVideoStream(otherUserVideo, stream);
+                    senderVideoStream = stream;
+                    addVideoStream(myVideo, stream);
 
                     peer.on("call", call => {
                         call.answer(stream);
 
                         call.on("stream", userVideoStream => {
-                            addVideoStream(myVideo, userVideoStream);
+                            if (!receiverVideoStream) {
+                                receiverVideoStream = userVideoStream;
+                            }
+                            addVideoStream(otherUserVideo, userVideoStream);
                         });
                     });
 
@@ -78,7 +98,10 @@ const makeCall = (psid, sender, receiver) => {
                 const call = peer.call(userId, stream);
 
                 call.on('stream', userVideoStream => {
-                  addVideoStream(otherUserVideo, userVideoStream);
+                    if (!receiverVideoStream) {
+                        receiverVideoStream = userVideoStream;
+                    }
+                    addVideoStream(otherUserVideo, userVideoStream);
                 });
 
                 call.on('close', () => {
@@ -95,8 +118,6 @@ const makeCall = (psid, sender, receiver) => {
         $("#calling__modal").removeClass("show__callingModal");
 
         onVideoCall = false;
-
-        console.log(onVideoCall);
     })
 
     return () => newSocket.close();
