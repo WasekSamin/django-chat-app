@@ -1,7 +1,5 @@
 // Search people
 const searchForUser = (inputVal) => {
-  console.log(inputVal.value);
-
   const chatPeople = document.querySelectorAll(".chat__people");
 
   for (let i = 0; i < chatPeople.length; i++) {

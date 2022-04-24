@@ -9,6 +9,89 @@ let sender_obj = null,
   receiver_obj = null,
   roomLocation = null;
 
+
+// Get csrf token cookie value
+const getCookie = (name) => {
+    var cookieValue = null;
+    if (document.cookie && document.cookie != "") {
+      var cookies = document.cookie.split(";");
+      for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i].trim();
+        // Does this cookie string begin with the name we want?
+        if (cookie.substring(0, name.length + 1) == name + "=") {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+};
+
+// Update the chat counter object
+const updateChatCounter = async(chatObj) => {
+    // console.log(chatObj);
+    const CSRFTOKEN = getCookie("csrftoken");
+
+    let formData = new FormData();
+    formData.append("room", chatObj.room);
+    formData.append("sender", chatObj.sender.email);
+    formData.append("receiver", chatObj.receiver.email);
+    formData.append("updateCounter", true);
+
+    await fetch("/chat-counter/", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": CSRFTOKEN
+        },
+        body: formData
+    }).then(res => {
+        if (res.ok) {
+            return res.json();
+        } else {
+            alert("Invalid request! Pleas try again...");
+        }
+    }).then(data => {
+        if (data) {
+            $(`#user-unseen-message-${data.sender_id}`).attr("class", "rounded-full w-[1.5rem] h-[1.5rem] bg-slate-600 text-xs flex items-center justify-center");
+            if (data.counter > 99) {
+                $(`#user-unseen-message-${data.sender_id}`).text(`${data.counter}+`);
+            } else {
+                $(`#user-unseen-message-${data.sender_id}`).text(data.counter);
+            }
+        }
+    }).catch(err => console.error(err));
+}
+
+// Reset the chat counter object
+const resetChatCounter = async(chatObj) => {
+    const CSRFTOKEN = getCookie("csrftoken");
+
+    let formData = new FormData();
+    formData.append("room", chatObj.room);
+    formData.append("sender", chatObj.sender.email);
+    formData.append("receiver", chatObj.receiver.email);
+    formData.append("resetCounter", true);
+
+    await fetch("/chat-counter/", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": CSRFTOKEN
+        },
+        body: formData
+    }).then(res => {
+        if (res.ok) {
+            return res.json();
+        } else {
+            alert("Invalid request! Please try again...");
+        }
+    }).then(data => {
+        if (data) {
+            $(`#user-unseen-message-${data.sender_id}`).removeClass("rounded-full w-[1.5rem] h-[1.5rem] bg-slate-600 text-xs flex items-center justify-center")
+            $(`#user-unseen-message-${data.sender_id}`).text("");
+        }
+    }).catch(err => console.error(err));
+}
+
 const setSocketConnection = (psid, email) => {
   const newSocket = io("http://localhost:9000", {
     query: {
@@ -22,6 +105,20 @@ const setSocketConnection = (psid, email) => {
       newSocket.id = socketId;
     });
 
+    // Receiving message and chat counting
+    newSocket.on("receive-message", (chatObj) => {
+        let room = window.location.href.split("/");
+        room = room[room.length - 2];
+
+        if (room !== chatObj.room) {
+            // Update the chat counter object
+            updateChatCounter(chatObj);
+        } else {
+            // Reset the chat counter object
+            resetChatCounter(chatObj);
+        }
+    });
+
     // Receiving call request
     newSocket.on("receive-call", (callObj) => {
       sender_obj = callObj.sender;
@@ -30,13 +127,12 @@ const setSocketConnection = (psid, email) => {
 
         if (!onVideoCall) {
             $("#receive__callingModal").addClass("show__receiveCallingModal");
-        
         } else {
             newSocket.emit("already-on-call", callObj);
         }
 
-    //   $("#caller__tune")[0].muted = false;
-    //   $("#caller__tune")[0].play();
+        // $("#caller__tune")[0].muted = false;
+        // $("#caller__tune")[0].play();
     });
   });
 

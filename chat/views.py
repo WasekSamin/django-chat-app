@@ -15,6 +15,35 @@ import time
 from copy import deepcopy
 
 
+# Find all the chat counters of the requested user as a receiver
+def find_all_matched_chat_counters(chat_counter_list, key, target, start, chat_counter_list_length, receiver_chat_counters):
+    quick_sort(chat_counter_list, key, start, len(chat_counter_list) - 1)
+    found_chat_counter_obj_index = binary_search(chat_counter_list, key, target, start, len(chat_counter_list) - 1)
+
+    if found_chat_counter_obj_index > -1:
+        receiver_chat_counters.append(chat_counter_list[found_chat_counter_obj_index])
+        chat_counter_list.pop(found_chat_counter_obj_index)
+        return find_all_matched_chat_counters(chat_counter_list, key, target, start, chat_counter_list_length, receiver_chat_counters)
+    return receiver_chat_counters
+
+
+def get_receiver_all_chat_counter_objects(chat_counter_list, account_list, myself_email):
+    receiver_chat_counters = []
+    copied_chat_counter_list = deepcopy(chat_counter_list)
+    all_matched_chat_counters = find_all_matched_chat_counters(copied_chat_counter_list, "receiver_email", myself_email, 0, len(copied_chat_counter_list), receiver_chat_counters)
+
+    if all_matched_chat_counters:
+        quick_sort(all_matched_chat_counters, "id", 0, len(all_matched_chat_counters) - 1)
+
+    for account in account_list:
+        _, found_chat_counter_obj = find_object(all_matched_chat_counters, "sender_email", account["email"], 0, len(all_matched_chat_counters))
+        # Adding counter if found the chat counter object
+        if found_chat_counter_obj is not None:
+            account["counter"] = found_chat_counter_obj["counter"]
+
+    return account_list
+
+
 class ChatHomeView(View):
     @method_decorator(is_user_logged_in())
     def get(self, request):
@@ -22,11 +51,18 @@ class ChatHomeView(View):
         myself_email = request.session.get("email", None)
 
         account_list = list(map(lambda i: i, accounts))
-        account_list, sender_obj = find_object(account_list, "email", myself_email, 0, len(account_list))
+        _, sender_obj = find_object(account_list, "email", myself_email, 0, len(account_list))
+
+        chat_counters = ChatCounter.objects.values()
+        chat_counter_list = list(map(lambda i: i, chat_counters))
+
+        # Find all the chat counters of the requested user as a receiver
+        account_list = get_receiver_all_chat_counter_objects(chat_counter_list, account_list, myself_email)
+        # print(account_list)
 
         args = {
             "accounts": accounts,
-            "sender_obj": sender_obj
+            "sender_obj": sender_obj,
         }
         return render(request, "chat/home.html", args)
 
@@ -90,7 +126,14 @@ class ChatroomView(View):
         accounts = Account.objects.values()
         account_list = list(map(lambda i: i, accounts))
 
+        myself_email = request.session.get("email", None)
+
         quick_sort(account_list, "id", 0, len(account_list) - 1)
+
+        chat_counters = ChatCounter.objects.values()
+        chat_counter_list = list(map(lambda i: i, chat_counters))
+
+        account_list = get_receiver_all_chat_counter_objects(chat_counter_list, account_list, myself_email)
 
         # For many to many fields, I have to do like this
         chats = Chat.objects.all()
@@ -120,7 +163,8 @@ class ChatroomView(View):
         matchedChatList = findAllMatchedChats(
             copiedChatList, account_list, itemList, room_slug)
 
-        quick_sort(matchedChatList, "id", 0, len(matchedChatList) - 1)
+        if matchedChatList:
+            quick_sort(matchedChatList, "id", 0, len(matchedChatList) - 1)
 
         sender_obj, receiver_obj = None, None
         
@@ -138,8 +182,6 @@ class ChatroomView(View):
                 _, user2_obj = find_object(account_list, "id", chatroom_obj["user2_id"], 0, len(account_list))
 
                 if user1_obj is not None and user2_obj is not None:
-                    myself_email = request.session.get("email", None)
-
                     if user1_obj["email"] == myself_email:
                         sender_obj = user1_obj
                         receiver_obj = user2_obj
@@ -163,6 +205,18 @@ class ChatroomView(View):
         return render(request, "chat/chat.html", args)
 
 
+# Resetting chat counter object
+def reset_chat_counter_obj(chat_counter_list, chatroom_obj, myself_email):
+    _, found_chat_counter_obj = find_object(chat_counter_list, "room", chatroom_obj["room_slug"], 0, len(chat_counter_list))
+
+    if found_chat_counter_obj is not None:
+        if found_chat_counter_obj["receiver_email"] == myself_email:
+            chat_counter_obj = ChatCounter(**found_chat_counter_obj)
+            if chat_counter_obj.counter > 0:
+                chat_counter_obj.counter = 0
+                chat_counter_obj.save()
+
+
 # If chatroom exists, then navigate to the chatroom
 # Else create a new chatroom
 class ChatroomCheckSlugView(View):
@@ -173,6 +227,9 @@ class ChatroomCheckSlugView(View):
 
         accounts = Account.objects.values()
         account_list = list(map(lambda i: i, accounts))
+
+        chat_counters = ChatCounter.objects.values()
+        chat_counter_list = list(map(lambda i: i, chat_counters))
 
         account_list, other_user_obj = find_object(
             account_list, "id", pk, 0, len(account_list))
@@ -194,8 +251,11 @@ class ChatroomCheckSlugView(View):
             chatroom_list, found_chatroom_obj = find_object(
                 chatroom_list, "check_slug", combined_both_user, 0, len(chatroom_list))
 
+            print(found_chatroom_obj)
             # If chatroom found for user1 + user2
             if found_chatroom_obj is not None:
+                # Resetting chat counter object
+                reset_chat_counter_obj(chat_counter_list, found_chatroom_obj, myself_email)
                 return redirect(f"/chat/{found_chatroom_obj['room_slug']}/")
             else:
                 # user2 + user1
@@ -206,6 +266,8 @@ class ChatroomCheckSlugView(View):
 
                 # If chatroom found for user2 + user1
                 if found_chatroom_obj is not None:
+                    # Resetting chat counter object
+                    reset_chat_counter_obj(chat_counter_list, found_chatroom_obj, myself_email)
                     return redirect(f"/chat/{found_chatroom_obj['room_slug']}/")
                 else:
                     # Create new chatroom
@@ -305,12 +367,12 @@ class MessageView(View):
                 return JsonResponse({
                     "email_change": True,
                     "email": myself_email
-                })
+                }, safe=False)
             elif email_status == "email_delete":
                 return JsonResponse({
                     "email_delete": True,
                     "email": myself_email
-                })
+                }, safe=False)
 
         found_chatroom_obj, found_account_obj, account_list = find_room_all_objects(
             room_slug, myself_email)
@@ -372,16 +434,16 @@ class MessageView(View):
                     json_response["created_at"] = chat_obj_datetime
                     # print(chat_obj_datetime)
 
-                    return JsonResponse(json_response)
+                    return JsonResponse(json_response, safe=False)
                 return JsonResponse({
                     "invalid_request": True
-                })
+                }, safe=False)
             return JsonResponse({
                 "invalid_request": True
-            })
+            }, safe=False)
         return JsonResponse({
             "invalid_request": True
-        })
+        }, safe=False)
 
 
 # Getting chat object, sender and receiver object
@@ -452,7 +514,7 @@ class FetchFileRequest(View):
             }),
             "files": json.dumps(files),
             "created_at": found_chat_obj["created_at"]
-        })
+        }, safe=False)
 
 
 # While calling the receiver, get all the info of the receiver object
@@ -487,10 +549,10 @@ class FetchReceiverCaller(View):
                     "is_active": receiver_obj["is_active"]
                 }
             }
-            return JsonResponse(json_response)
+            return JsonResponse(json_response, safe=False)
         return JsonResponse({
             "invalid_request": True
-        })
+        }, safe=False)
 
 
 # Finding the chatroom, user1 and user2 object
@@ -567,7 +629,70 @@ class FetchCallOptionUserInfo(View):
             return JsonResponse(json_response, safe=False)
         JsonResponse({
             "invalid_request": True
-        })
+        }, safe=False)
+
+
+class ChatCounterView(View):
+    @method_decorator(is_user_logged_in())
+    def post(self, request):
+        room_slug = request.POST.get("room", None)
+        sender_email = request.POST.get("sender", None)
+        receiver_email = request.POST.get("receiver", None)
+        update_counter = request.POST.get("updateCounter", None)
+        reset_counter = request.POST.get("resetCounter", None)
+
+        chatrooms = Chatroom.objects.values()
+        chatroom_list = list(map(lambda i: i, chatrooms))
+        accounts = Account.objects.values()
+        account_list = list(map(lambda i: i, accounts))
+        chat_counters = ChatCounter.objects.values()
+        chat_counter_list = list(map(lambda i: i, chat_counters))
+
+        _, found_chatroom_obj = find_object(chatroom_list, "room_slug", room_slug, 0, len(chatroom_list))
+        _, found_sender_obj = find_object(account_list, "email", sender_email, 0, len(account_list))
+        _, found_receiver_obj = find_object(account_list, "email", receiver_email, 0, len(account_list))
+        _, found_chat_counter_obj = find_object(chat_counter_list, "room", room_slug, 0, len(chat_counter_list))
+
+        # print(found_chatroom_obj)
+        # print(found_sender_obj)
+        # print(found_receiver_obj)
+
+        if found_chatroom_obj is not None and found_sender_obj is not None and found_receiver_obj is not None:
+            chatroom_obj = Chatroom(**found_chatroom_obj)
+            sender_obj = Account(**found_sender_obj)
+            receiver_obj = Account(**found_receiver_obj)
+
+            if found_chat_counter_obj is None:
+                chat_counter_obj = ChatCounter(
+                    room=chatroom_obj.room_slug,
+                    chatroom=chatroom_obj,
+                    sender=sender_obj,
+                    receiver=receiver_obj,
+                    sender_email=sender_obj.email,
+                    receiver_email=receiver_obj.email,
+                )
+            else:
+                chat_counter_obj = ChatCounter(**found_chat_counter_obj)
+
+            if update_counter:
+                chat_counter_obj.sender = sender_obj
+                chat_counter_obj.receiver = receiver_obj
+                chat_counter_obj.sender_email = sender_obj.email
+                chat_counter_obj.receiver_email = receiver_obj.email
+                chat_counter_obj.counter += 1
+            elif reset_counter:
+                chat_counter_obj.counter = 0
+
+            chat_counter_obj.save()
+
+            return JsonResponse({
+                "sender_id": chat_counter_obj.sender.id,
+                "counter": chat_counter_obj.counter
+            }, safe=False)
+        else:
+            return JsonResponse({
+                "invalid_response": True
+            }, safe=False)
 
 
 
@@ -599,5 +724,5 @@ class LogoutView(View):
                 # return JsonResponse({
                 #     "email": email,
                 #     "user_logout": True
-                # })
+                # }, safe=False)
         return redirect("/account/login/")

@@ -42,8 +42,6 @@ $(document).ready(() => {
     const data = registerForm.serialize();
 
     const makeSocketConnection = (data) => {
-      console.log(data);
-
       const newSocket = io("http://localhost:9000", {
         query: {
           SID: data.email,

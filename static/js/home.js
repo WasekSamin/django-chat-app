@@ -69,11 +69,6 @@ const makeSocketConnection = (email, psid) => {
       accountStatus.classList.remove("bg-rose-500");
       accountStatus.classList.add("bg-green-500");
     });
-
-    // Receiving message
-    newSocket.on("receive-message", (chatObj) => {
-      console.log(chatObj);
-    });
   });
 
   return () => newSocket.close();

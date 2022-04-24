@@ -40,14 +40,12 @@ $(document).ready(() => {
 
     newSocket.on("connect", () => {
       newSocket.on("on-connect", (socketId) => {
-        console.log(socketId);
         newSocket.id = socketId;
         localStorage.setItem("PSID", socketId);
 
         newSocket.emit("user-login", data);
         // Navigate to home page on login success
         newSocket.on("login-success", (accountObj) => {
-          console.log(accountObj);
           if (accountObj.id === data.id) {
             window.location.href = "/";
           }

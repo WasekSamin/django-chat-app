@@ -28,7 +28,7 @@
                 </div>
                 <!-- Show 99+ if unseen message length is greater than 99 -->
                 <div>
-                    <p id="user-unseen-message-{{ account.id }}" class="rounded-full w-[1.5rem] h-[1.5rem] bg-slate-600 text-xs flex items-center justify-center">99</p>
+                    <p id="user-unseen-message-{{ account.id }}" class="{% if account.counter %}rounded-full w-[1.5rem] h-[1.5rem] bg-slate-600 text-xs flex items-center justify-center{% endif %}">{% if account.counter %}{{ account.counter }}{% endif %}</p>
                 </div>
             </a>
         {% endfor %}

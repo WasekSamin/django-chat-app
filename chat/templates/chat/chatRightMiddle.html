@@ -9,13 +9,16 @@
 <link rel="stylesheet" href="{% static 'css/chatRightMiddle.css' %}">
 <script src="{% static 'js/chatRightMiddle.js' %}" defer></script>
 
+{% comment %}Lottiefly cdn{% endcomment %}
+<script src="https://unpkg.com/@lottiefiles/lottie-player@0.4.0/dist/lottie-player.js" defer></script>
+
 <div class="h-full">
     {% comment %}Chat image modal{% endcomment %}
     {% include "chat/chatImageModal.html" %}
 
     {% include "chat/callVideo.html" %}
 
-    <div class="h-full flex flex-col gap-y-3 py-3 overflow-x-hidden overflow-y-auto chat__rightMiddleChat">
+    <div class="h-full flex flex-col gap-y-3 py-3 overflow-x-hidden overflow-y-auto relative chat__rightMiddleChat">
         {% for chat in chats %}
             <div class="flex {% if request.session.email %}{% if chat.sender.email == request.session.email %}justify-end{% else %}justify-start{% endif %}{% endif %}">
                 <div class="flex gap-x-1 w-[75%] sm:w-1/2 chat__rightMiddleDivWidth">
@@ -31,7 +34,7 @@
                             {% endif %}
                         </p>
                         {% if chat.message %}
-                            <p class="text-400">{{ chat.message }}</p>
+                            <p class="text-400 flex flex-wrap items-center gap-1 chat__messagePara">{{ chat.message }}</p>
                         {% elif chat.audio %}
                             <div class="h-[40px] chat__audioDiv">
                                 <audio class="h-[40px] shadow" preload="auto" controls>
@@ -60,5 +63,9 @@
                 </div>
             </div>
         {% endfor %}
+
+        <div id="chat__scrollToBottomDiv" class="fixed left-[50%] flex justify-center cursor-pointer opacity-0">
+            <span class="iconify text-2xl lg:text-3xl text-indigo-500 rounded-full" data-icon="akar-icons:circle-chevron-down-fill"></span>
+        </div>
     </div>
 </div>

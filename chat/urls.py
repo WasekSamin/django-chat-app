@@ -15,5 +15,7 @@ urlpatterns = [
     path("check-receiver/<int:pk>/", FetchReceiverCaller.as_view(), name="check-receiver"),
     # While leave call, fetch sender and user info
     path("call-options/<str:room_slug>/", FetchCallOptionUserInfo.as_view(), name="leave-call"),
+    # Chat counter
+    path("chat-counter/", ChatCounterView.as_view(), name="chat-counter"),
     path("logout/", LogoutView.as_view(), name="logout"),
 ]

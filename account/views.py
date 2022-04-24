@@ -76,15 +76,15 @@ class AccountLogin(View):
                                 "username": account_obj.username,
                                 "is_online": account_obj.is_online,
                             })
-                        })
+                        }, safe=False)
                     else:
                         return JsonResponse({
                             "invalid_credential": True,
-                        })
+                        }, safe=False)
                 else:
                     return JsonResponse({
                         "invalid_credential": True
-                    })
+                    }, safe=False)
             else:
                 return JsonResponse({
                     "blank_fields": True
@@ -92,7 +92,7 @@ class AccountLogin(View):
         else:
             return JsonResponse({
                 "blank_fields": True
-            })
+            }, safe=False)
 
 
 class RegisterView(View):
@@ -129,11 +129,11 @@ class CreateAccount(View):
             if password != confirm_password:
                 return JsonResponse({
                     "password_did_not_match": True
-                })
+                }, safe=False)
             elif len(password) < 6:
                 return JsonResponse({
                     "password_too_short": True
-                })
+                }, safe=False)
 
             if len(username) > 0 and len(email) > 0 and len(password) > 0 and len(confirm_password) > 0:
                 accounts = Account.objects.values()
@@ -149,7 +149,7 @@ class CreateAccount(View):
                 if found_account_obj_index > -1:
                     return JsonResponse({
                         "user_exist": True
-                    })
+                    }, safe=False)
                 else:
                     # Creating account object
                     account_obj = Account(
@@ -170,12 +170,12 @@ class CreateAccount(View):
                             "username": account_obj.username,
                             "is_online": account_obj.is_online
                         })
-                    })
+                    }, safe=False)
             else:
                 return JsonResponse({
                     "blank_fields": True
-                })
+                }, safe=False)
         else:
             return JsonResponse({
                 "blank_fields": True
-            })
+            }, safe=False)

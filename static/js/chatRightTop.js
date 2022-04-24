@@ -21,7 +21,7 @@ const makeCall = (psid, sender, receiver) => {
             roomLink: window.location.href,
         });
 
-        // If receiver already on call
+        // If receiver is already on another call
         newSocket.on("receiver-already-on-call", callObj => {
             $("#calling__modal").removeClass("show__callingModal");
             $("#calling__modal").addClass("show__callingModal");

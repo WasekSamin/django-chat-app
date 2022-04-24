@@ -20,6 +20,12 @@
   -webkit-box-orient: vertical;
 }
 
+.chat__messagePara > img {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+}
+
 .chat__file {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -51,6 +57,16 @@
   z-index: 20 !important;
   opacity: 1;
   transition: all 0.3s ease-in-out;
+}
+
+#close__chatImageModal {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+#close__chatImageModal > svg {
+  position: relative;
+  left: 0.3rem;
+  top: -0.1rem;
 }
 
 .download__icon {
@@ -101,6 +117,29 @@
   transform: translateX(-50%);
 }
 
+#chat__scrollToBottomDiv {
+  transform: translate(400%);
+  bottom: -100%;
+  z-index: 50;
+  transition: bottom 0.3s ease-in-out;
+}
+
+#chat__scrollToBottomDiv > svg {
+  animation: glowing 1300ms infinite;
+}
+
+@keyframes glowing {
+  0% {
+    box-shadow: 0 0 3px rgb(99 102 241);
+  }
+  50% {
+    box-shadow: 0 0 10px rgb(99 102 241);
+  }
+  100% {
+    box-shadow: 0 0 3px rgb(99 102 241);
+  }
+}
+
 @keyframes fileLoadingSpinner {
   from {
     transform: rotate(0deg);
@@ -138,6 +177,12 @@
     right: 1rem;
     z-index: 20;
     transform: translateX(0);
+  }
+}
+
+@media (max-width: 870px) {
+  #chat__scrollToBottomDiv {
+    transform: translate(0%);
   }
 }
 

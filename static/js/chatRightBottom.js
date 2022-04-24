@@ -58,6 +58,27 @@ $(document).ready(() => {
     return cookieValue;
   };
 
+  let scrollTrigger = false;
+  let userScrollTrigger = true;
+
+  // Scroll trigger for chat -> If user scroll to top, then show a down scroll button
+  $(".chat__rightMiddleChat").scroll((e) => {
+    let chatHeight = $(".chat__rightMiddleChat")[0].scrollHeight;
+    let chatScrollTop = $(".chat__rightMiddleChat")[0].scrollTop;
+    let chatInnerHeight = $(".chat__rightMiddleChat").innerHeight();
+
+    if (chatHeight >= chatScrollTop + chatInnerHeight + 100 && scrollTrigger) {
+      $("#chat__scrollToBottomDiv").css({"opacity": 1, "bottom": "5rem"});
+      userScrollTrigger = false;
+    } else if (chatHeight === chatScrollTop + chatInnerHeight) {
+      scrollTrigger = true;
+      userScrollTrigger = true;
+    } else {
+      userScrollTrigger = true;
+      $("#chat__scrollToBottomDiv").css({"opacity": 0, "bottom": "-100%"});
+    }
+  });
+
   // Appending new message
   const appendMessage = (senderUsername, firstLetter, secondLetter, data) => {
     const chatRightMiddle = document.querySelector(".chat__rightMiddleChat");
@@ -155,9 +176,11 @@ $(document).ready(() => {
 
       chatRightMiddle.appendChild(div);
 
-      $(".chat__rightMiddleChat").animate({
-        scrollTop: $(".chat__rightMiddleChat")[0].scrollHeight,
-      });
+      if (userScrollTrigger) {
+        $(".chat__rightMiddleChat").animate({
+          scrollTop: $(".chat__rightMiddleChat")[0].scrollHeight,
+        });
+      }
   }
 
   // Create a new message
@@ -206,13 +229,7 @@ $(document).ready(() => {
         })
         chatObj["file_names"] = fileNameArr;
         chatObj["file_extensions"] = fileExtensionArr;
-        newSocket.emit("create-message", {
-          "id": chatObj.id,
-          "sender": chatObj.sender,
-          "receiver": chatObj.receiver,
-          "created_at": chatObj.created_at,
-          "type": "files"
-        });
+        newSocket.emit("create-message", chatObj);
       }
 
       const sender = chatObj.sender;
@@ -237,6 +254,7 @@ $(document).ready(() => {
   const resetLocalStorageEmailVal = (email) => {
     localStorage.removeItem("email");
     localStorage.setItem("email", email);
+    window.location.reload();
   }
 
   // Sending text message
@@ -386,7 +404,7 @@ $(document).ready(() => {
       }, 20000);
     }).catch((e) => {
       alert('We could not retrieve your message');
-      console.log(e);
+      console.error(e);
     });
   }
 

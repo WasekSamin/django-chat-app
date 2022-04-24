@@ -5,10 +5,38 @@ $(document).ready(() => {
   });
 });
 
+let scrollTrigger = false;
+let userScrollTrigger = true;
+
+// Scroll trigger for chat -> If user scroll to top, then show a down scroll button
+$(".chat__rightMiddleChat").scroll((e) => {
+  let chatHeight = $(".chat__rightMiddleChat")[0].scrollHeight;
+  let chatScrollTop = $(".chat__rightMiddleChat")[0].scrollTop;
+  let chatInnerHeight = $(".chat__rightMiddleChat").innerHeight();
+
+  if (chatHeight >= chatScrollTop + chatInnerHeight + 100 && scrollTrigger) {
+    $("#chat__scrollToBottomDiv").css({"opacity": 1, "bottom": "5rem"});
+    userScrollTrigger = false;
+  } else if (chatHeight === chatScrollTop + chatInnerHeight) {
+    scrollTrigger = true;
+    userScrollTrigger = true;
+  } else {
+    userScrollTrigger = true;
+    $("#chat__scrollToBottomDiv").css({"opacity": 0, "bottom": "-100%"});
+  }
+});
+
+$("#chat__scrollToBottomDiv").click(() => {
+  $(".chat__rightMiddleChat").animate({
+    scrollTop: $(".chat__rightMiddleChat")[0].scrollHeight,
+  });
+});
+
 let videoModeOn = true, audioModeOn = true;
 
 // Appending new message
 const appendMessage = (senderUsername, firstLetter, secondLetter, chatObj) => {
+  // console.log(chatObj);
   const chatRightMiddle = document.querySelector(".chat__rightMiddleChat");
       
   const div = document.createElement("div");
@@ -127,9 +155,11 @@ const appendMessage = (senderUsername, firstLetter, secondLetter, chatObj) => {
 
   chatRightMiddle.appendChild(div);
 
-  $(".chat__rightMiddleChat").animate({
-    scrollTop: $(".chat__rightMiddleChat")[0].scrollHeight,
-  });
+  if (userScrollTrigger) {
+    $(".chat__rightMiddleChat").animate({
+      scrollTop: $(".chat__rightMiddleChat")[0].scrollHeight,
+    });
+  }
 }
 
 const toggleVideoCam = (stream, videoMode) => {
@@ -158,20 +188,25 @@ const receiveMessage = (email, psid) => {
 
     // Receiving message
     newSocket.on("receive-message", (chatObj) => {
-      const sender = chatObj.sender;
+      let room = window.location.href.split("/");
+      room = room[room.length - 2];
 
-      const senderUsername = sender.username;
-      let firstLetter = null, secondLetter = null;
+      if (room === chatObj.room) {
+        const sender = chatObj.sender;
 
-      // For the avatar
-      if (senderUsername.split(" ").length > 1) {
-        firstLetter = senderUsername.split(" ")[0][0].toUpperCase();
-        secondLetter = senderUsername.split(" ")[1][0].toUpperCase();
-      } else {
-        firstLetter = senderUsername[0].toUpperCase();
+        const senderUsername = sender.username;
+        let firstLetter = null, secondLetter = null;
+
+        // For the avatar
+        if (senderUsername.split(" ").length > 1) {
+          firstLetter = senderUsername.split(" ")[0][0].toUpperCase();
+          secondLetter = senderUsername.split(" ")[1][0].toUpperCase();
+        } else {
+          firstLetter = senderUsername[0].toUpperCase();
+        }
+
+        appendMessage(senderUsername, firstLetter, secondLetter, chatObj);
       }
-
-      appendMessage(senderUsername, firstLetter, secondLetter, chatObj);
     });
 
     // Leave call on the receiver side
@@ -299,23 +334,6 @@ if (onCall && sender_id && receiver_id) {
       }
   }
 }
-
-// Get csrf token cookie value
-const getCookie = (name) => {
-  var cookieValue = null;
-  if (document.cookie && document.cookie != "") {
-    var cookies = document.cookie.split(";");
-    for (var i = 0; i < cookies.length; i++) {
-      var cookie = cookies[i].trim();
-      // Does this cookie string begin with the name we want?
-      if (cookie.substring(0, name.length + 1) == name + "=") {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        break;
-      }
-    }
-  }
-  return cookieValue;
-};
 
 // Fetching user1 and user2 object of chatroom to leave the call
 const fetchCallOptionUsersInfo = async(room, socket, info) => {

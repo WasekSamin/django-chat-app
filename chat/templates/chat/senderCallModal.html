@@ -2,6 +2,7 @@
     <div class="absolute top-[50%] left-[50%] w-[85%] sm:w-[70%] md:w-1/2 py-5 bg-slate-700 z-50 rounded shadow">
         <div class="flex justify-center items-center py-5">
             <p id="sender__callingText" class="font-semibold">Calling {% if request.session.email is not None and request.session.email == sender_obj.email %}{{ receiver_obj.username }}{% else %}{{ sender_obj.username }}{% endif %}...</p>
+            {% comment %}Show when receiver on another call{% endcomment %}
             <p id="sender__callingFailedText" class="font-semibold text-rose-500 hidden">Receiver is already in another call!</p>
             <input type="hidden" id="calling__value" value="{% if request.session.email is not None and request.session.email == sender_obj.email %}{{ receiver_obj.id }}{% else %}{{ sender_obj.id }}{% endif %}">
         </div>
