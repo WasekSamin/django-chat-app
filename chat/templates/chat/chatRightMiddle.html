@@ -47,7 +47,7 @@
                                 <div class="mb-1 last:mb-0">
                                     {% with file.file|split:"." as file %}
                                         {% if file.1 == "jpg" or file.1 == "png" or file.1 == "jpeg" or file.1 == "gif" %}
-                                            <img onclick="showChatImageModal(this)" src="{{ file.2.url }}" class="w-full h-48 object-cover cursor-pointer" />
+                                            <img onclick="showChatImageModal(this)" data-src="{{ file.2.url }}" class="w-full h-48 object-cover cursor-pointer chat__imageFile" />
                                         {% else %}
                                             <a class="flex items-center gap-x-1 text-sky-500" href="{{ file.2.url }}" download>
                                                 <span class="iconify download__icon" data-icon="eva:download-fill"></span>

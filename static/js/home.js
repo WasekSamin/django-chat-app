@@ -77,3 +77,35 @@ const makeSocketConnection = (email, psid) => {
 if (email && psid) {
   makeSocketConnection(email, psid);
 }
+
+const broadCastUserLogout = (accountId) => {
+  const newSocket = io("http://localhost:9000", {
+    query: {
+      SID: email
+    }
+  });
+
+  newSocket.on("connect", () => {
+    newSocket.emit("socket-exist", psid);
+    newSocket.on("on-socket-exist", socketId => {
+      newSocket.id = socketId;
+    });
+
+    newSocket.emit("user-logout", accountId);
+  });
+}
+
+const makeLogout = async() => {
+  await fetch(`/logout/`)
+  .then(res => {
+    if (res.ok) {
+      return res.json();
+    } else {
+      alert("Invalid request! Please try again...");
+    }
+  }).then(data => {
+    if (data.user_logout) {
+      broadCastUserLogout({accountId: data.account_id, accountEmail: data.account_email});      
+    }
+  }).catch(err => console.error(err));
+}

@@ -134,6 +134,18 @@ const setSocketConnection = (psid, email) => {
         // $("#caller__tune")[0].muted = false;
         // $("#caller__tune")[0].play();
     });
+
+    // Receive and change logged out user status
+    newSocket.on("receive-user-logout", accountInfo => {
+        $(`#account-status-${accountInfo.accountId}`).removeClass("bg-green-500");
+        $(`#account-status-${accountInfo.accountId}`).addClass("bg-rose-500");
+
+        if (accountInfo.accountEmail === email) {
+            localStorage.removeItem("PSID");
+            localStorage.removeItem("email");
+            window.location.href = "/authentication/login/";
+        }
+    });
   });
 
   return () => newSocket.close();

@@ -6,7 +6,7 @@ const io = require("socket.io")(9000, {
 
 io.on("connection", (socket) => {
   const userEmail = socket.handshake.query.SID;
-  console.log(userEmail);
+  // console.log(userEmail);
 
   // Join user to socket
   socket.join(userEmail);
@@ -17,14 +17,14 @@ io.on("connection", (socket) => {
   // If socket connection already exists
   socket.on("socket-exist", (socketId) => {
     if (socketId) {
-      console.log(socketId);
+      // console.log(socketId);
       socket.emit("on-socket-exist", socketId);
     }
   });
 
   // Adding user + Make user register
   socket.on("add-user", (accountObj) => {
-    console.log(accountObj);
+    // console.log(accountObj);
     if (accountObj) {
       socket.broadcast.emit("add-to-all-users", accountObj);
       socket.emit("register-success", accountObj);
@@ -33,7 +33,7 @@ io.on("connection", (socket) => {
 
   // Make user login + login success
   socket.on("user-login", (accountObj) => {
-    console.log(accountObj);
+    // console.log(accountObj);
     if (accountObj) {
       socket.broadcast.emit("make-user-login", accountObj);
       socket.emit("login-success", accountObj);
@@ -42,7 +42,7 @@ io.on("connection", (socket) => {
 
   // Create and receive a new text message
   socket.on("create-message", (chatObj) => {
-    console.log(chatObj);
+    // console.log(chatObj);
 
     if (chatObj) {
       const room = chatObj.receiver.email;
@@ -52,7 +52,7 @@ io.on("connection", (socket) => {
 
   // Create and receiver call
   socket.on("create-call", (callObj) => {
-    console.log("CREATING CALL:", callObj);
+    // console.log("CREATING CALL:", callObj);
     if (callObj) {
       const room = callObj.receiver.email;
       socket.to(room).emit("receive-call", callObj);
@@ -61,7 +61,7 @@ io.on("connection", (socket) => {
 
   // After the call is received by receiver
   socket.on("call-received", (callObj) => {
-    console.log(callObj);
+    // console.log(callObj);
 
     if (callObj) {
       const room = callObj.sender.email;
@@ -80,7 +80,7 @@ io.on("connection", (socket) => {
 
   // If receiver already on a call
   socket.on("already-on-call", callObj => {
-    console.log("ALREADY ON CALL:", callObj);
+    // console.log("ALREADY ON CALL:", callObj);
     if (callObj) {
       const room = callObj.sender.email;
       socket.to(room).emit("receiver-already-on-call", callObj);
@@ -89,7 +89,7 @@ io.on("connection", (socket) => {
 
   // Leave call on both sender and receiver side
   socket.on("leave-call", (callObj) => {
-    console.log(callObj);
+    // console.log(callObj);
     if (callObj) {
       const room = callObj.receiver.email;
       // Receiver side
@@ -101,7 +101,7 @@ io.on("connection", (socket) => {
 
   // Video on/off on both sender and receiver side
   socket.on("video-mode-option", callObj => {
-    console.log(callObj);
+    // console.log(callObj);
     if(callObj) {
       const room = callObj.receiver.email;
       // Receiver side
@@ -112,7 +112,7 @@ io.on("connection", (socket) => {
 
   // Audio on/off on both sender and receiver side
   socket.on("audio-mode-option", callObj => {
-    console.log(callObj);
+    // console.log(callObj);
     if(callObj) {
       const room = callObj.receiver.email;
       // Receiver side
@@ -121,8 +121,10 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Create and receive a new voice message
-  socket.on("create-voice-message", (chatObj) => {
-    console.log(chatObj);
-  });
+  socket.on("user-logout", accountInfo => {
+    // console.log(accountInfo);
+    if (accountInfo) {
+      socket.broadcast.emit("receive-user-logout", accountInfo);
+    }
+  })
 });

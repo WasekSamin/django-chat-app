@@ -9,6 +9,6 @@ def is_user_logged_in():
             if email is not None:
                 return func(request, *args, **kwargs)
             else:
-                return redirect("account:login")
+                return redirect("authentication:login")
         return wrapper
     return decorator

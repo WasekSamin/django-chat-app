@@ -102,7 +102,7 @@ $(document).ready(() => {
       if (data.type === "text") { // For sending text messages
         messageDiv.innerHTML = `
           <p class="font-semibold right__middleUsername">${senderUsername}</p>
-          <p class="text-400">${data.message}</p>
+          <p class="text-400 flex flex-wrap items-center gap-1 chat__messagePara">${data.message}</p>
           <p class="text-500 text-xs">${data.created_at}</p>
         `
       } else if (data.type === "audio") { // For sending audio messages
@@ -110,7 +110,7 @@ $(document).ready(() => {
         <p class="font-semibold right__middleUsername">${senderUsername}</p>
         <div class="h-[40px] chat__audioDiv">
           <audio class="h-[40px] shadow" preload="auto" controls>
-              <source src="${URL.createObjectURL(data.audio)}" type="audio/mpeg" />
+              <source class="chat__audioFile" src="${URL.createObjectURL(data.audio)}" type="audio/mpeg" />
               Your browser does not support the audio format!
           </audio>
         </div>
@@ -134,7 +134,7 @@ $(document).ready(() => {
             data.file_extensions[i] === "gif") {
               const imageDiv = document.createElement("img");
               imageDiv.setAttribute("onclick", "showChatImageModal(this)")
-              imageDiv.setAttribute("class", `w-full h-48 object-cover cursor-pointer ${i !== data.files.length - 1 ? "mb-2" : "mb-0"}`);
+              imageDiv.setAttribute("class", `w-full h-48 object-cover cursor-pointer ${i !== data.files.length - 1 ? "mb-2" : "mb-0"} chat__imageFile`);
               imageDiv.setAttribute("src", URL.createObjectURL(file));
               
               fileMainDiv.appendChild(imageDiv);

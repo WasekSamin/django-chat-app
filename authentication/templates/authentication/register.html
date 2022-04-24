@@ -1,4 +1,4 @@
-{% extends "account/base.html" %}
+{% extends "authentication/base.html" %}
 
 {% load static %}
 
@@ -12,7 +12,7 @@
     <div class="w-[85%] sm:w-[70%] md:w-1/2 rounded shadow p-5 bg-slate-700">
         <h3 class="font-semibold text-xl sm:text-2xl text-center mb-5">Sign Up</h3>
         <p id="register__errorMessage" class="font-semibold text-center my-3 text-rose-500 hidden"></p>
-        <form id="register__form" action="{% url 'account:account-create' %}" method="post" class="flex flex-col gap-y-3">
+        <form id="register__form" action="{% url 'authentication:account-create' %}" method="post" class="flex flex-col gap-y-3">
             {% csrf_token %}
             <section class="flex flex-col gap-y-1">
                 <label for="username">*Username</label>
@@ -39,7 +39,7 @@
                 </section>
 
                 <section class="text-center">
-                    <p class="text-xs text-slate-400">Already have an account! <a href="{% url 'account:login' %}" class="hover:underline">Sign in</a> here</p>
+                    <p class="text-xs text-slate-400">Already have an account! <a href="{% url 'authentication:login' %}" class="hover:underline">Sign in</a> here</p>
                 </section>
             </div>
         </form>

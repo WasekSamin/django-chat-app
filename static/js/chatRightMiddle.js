@@ -34,6 +34,35 @@ $("#chat__scrollToBottomDiv").click(() => {
 
 let videoModeOn = true, audioModeOn = true;
 
+const preloadImage = (img) => {
+  const src = img.getAttribute("data-src");
+
+  if (!src) return;
+  img.src = src;
+}
+
+const imageObserver = new IntersectionObserver((entries, imageObserver) => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    
+    preloadImage(entry.target);
+    imageObserver.unobserve(entry.target);
+  })
+}, {
+  threshold: 0.1
+});
+
+// Lazy load image
+const lazyLoadImages = () => {
+  const images = document.querySelectorAll(".chat__imageFile");
+
+  images.forEach(img => {
+    imageObserver.observe(img);
+  });
+}
+
+lazyLoadImages();
+
 // Appending new message
 const appendMessage = (senderUsername, firstLetter, secondLetter, chatObj) => {
   // console.log(chatObj);
@@ -58,7 +87,7 @@ const appendMessage = (senderUsername, firstLetter, secondLetter, chatObj) => {
   if (chatObj.type === "text") {  // For receiving text message
     messageDiv.innerHTML = `
       <p class="font-semibold right__middleUsername">${senderUsername}</p>
-      <p class="text-400">${chatObj.message}</p>
+      <p class="text-400 flex flex-wrap items-center gap-1 chat__messagePara">${chatObj.message}</p>
       <p class="text-500 text-xs">${chatObj.created_at}</p>
     `
   } else if (chatObj.type === "audio") {  // For receiving audio message
@@ -69,7 +98,7 @@ const appendMessage = (senderUsername, firstLetter, secondLetter, chatObj) => {
       <p class="font-semibold right__middleUsername">${senderUsername}</p>
       <div class="h-[40px] chat__audioDiv">
         <audio class="h-[40px] shadow" preload="auto" controls>
-            <source src="${URL.createObjectURL(audio)}" type="audio/mpeg" />
+            <source class="chat__audioFile" src="${URL.createObjectURL(audio)}" type="audio/mpeg" />
             Your browser does not support the audio format!
         </audio>
       </div>
@@ -109,7 +138,7 @@ const appendMessage = (senderUsername, firstLetter, secondLetter, chatObj) => {
           ) {
             const imageDiv = document.createElement("img");
             imageDiv.setAttribute("onclick", "showChatImageModal(this)");
-            imageDiv.setAttribute("class", `w-full h-48 object-cover cursor-pointer ${i !== files.length - 1 ? "mb-2" : "mb-0"}`);
+            imageDiv.setAttribute("class", `w-full h-48 object-cover cursor-pointer ${i !== files.length - 1 ? "mb-2" : "mb-0"} chat__imageFile`);
             imageDiv.setAttribute("src", `/media/${file.file}`);
 
             fileMainDiv.appendChild(imageDiv);
@@ -237,6 +266,7 @@ const showChatImageModal = (img) => {
   $("#chat__imageModal").addClass("show__chatImageModal");
   if (img.src) {
     $(".chat__selectedImg").attr("src", img.src);
+    $("#chat__scrollToBottomDiv").css({"opacity": 0, "bottom": "-100%"});
   }
 }
 

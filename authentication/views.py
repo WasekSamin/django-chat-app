@@ -1,7 +1,5 @@
-from urllib import request
 from django.shortcuts import render, redirect
 from django.views import View
-from django.contrib import messages
 from .models import *
 from django_chat_app.quick_sort import quick_sort
 from django_chat_app.binary_search import binary_search
@@ -12,9 +10,8 @@ import json
 
 # If email session exist, redirect to homepage
 def check_session_exist(request):
-    # print(request.session.get("email", None))
-
     email = request.session.get("email", None)
+    print(email)
 
     if email is not None:
         return True
@@ -28,7 +25,7 @@ class LoginView(View):
         if session_exist:
             return redirect("/")
 
-        return render(request, "account/login.html")
+        return render(request, "authentication/login.html")
 
 
 def strip_login_info(email, password):
@@ -102,7 +99,7 @@ class RegisterView(View):
         if session_exist:
             return redirect("/")
 
-        return render(request, "account/register.html")
+        return render(request, "authentication/register.html")
 
 
 def striping_user_given_info(username, email, password, confirm_password):

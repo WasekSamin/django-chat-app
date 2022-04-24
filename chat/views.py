@@ -1,6 +1,6 @@
 from urllib import request
 from django.shortcuts import render, redirect
-from account.models import Account
+from authentication.models import Account
 from django_chat_app.quick_sort import quick_sort
 from django_chat_app.binary_search import binary_search
 from django.views import View
@@ -695,7 +695,7 @@ class ChatCounterView(View):
             }, safe=False)
 
 
-
+# User logout
 class LogoutView(View):
     def get(self, request):
         email = request.session.get("email", None)
@@ -718,11 +718,12 @@ class LogoutView(View):
                 account_obj = Account(**found_account_obj)
                 account_obj.save()
 
-                del request.session["email"]
+                # Clearing every session
+                request.session.clear()
 
-                return redirect("/account/login/")
-                # return JsonResponse({
-                #     "email": email,
-                #     "user_logout": True
-                # }, safe=False)
-        return redirect("/account/login/")
+                return JsonResponse({
+                    "account_id": account_obj.id,
+                    "account_email": account_obj.email,
+                    "user_logout": True
+                }, safe=False)
+        return redirect("/authentication/login/")
