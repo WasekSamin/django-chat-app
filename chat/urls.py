@@ -1,4 +1,6 @@
-from django.urls import path
+from django.urls import path, re_path
+from django.views.static import serve
+from django.conf import settings
 
 from .views import *
 
@@ -18,4 +20,7 @@ urlpatterns = [
     # Chat counter
     path("chat-counter/", ChatCounterView.as_view(), name="chat-counter"),
     path("logout/", LogoutView.as_view(), name="logout"),
+
+    # For file download
+    re_path(r'^download/(?P<path>.*)$', serve, {'document root': settings.MEDIA_ROOT}),
 ]

@@ -7,11 +7,13 @@ from django.views import View
 from django.utils.decorators import method_decorator
 from django_chat_app.decorators import is_user_logged_in
 from .models import *
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, Http404
 import random
 import string
 import json
 import time
+import os
+from django.conf import settings
 from copy import deepcopy
 
 
@@ -727,3 +729,14 @@ class LogoutView(View):
                     "user_logout": True
                 }, safe=False)
         return redirect("/authentication/login/")
+
+
+# For file download
+def download(request, path):
+    file_path = os.path.join(settings.MEDIA_ROOT, path)
+    if os.path.exists(file_path):
+        with open(file_path, 'rb') as fh:
+            response = HttpResponse(fh.read(), content_type="application/vnd.ms-excel")
+            response['Content-Disposition'] = 'inline; filename=' + os.path.basename(file_path)
+            return response
+    raise Http404

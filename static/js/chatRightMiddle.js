@@ -111,6 +111,8 @@ const appendMessage = (senderUsername, firstLetter, secondLetter, chatObj) => {
     .then(res => {
       if (res.ok) {
         return res.json();
+      } else {
+        alert("Invalid request! Please try again...");
       }
     }).then(data => {
       if (data) {
