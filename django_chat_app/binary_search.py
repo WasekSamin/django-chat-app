@@ -10,5 +10,5 @@ def binary_search(lst, key, target, start, end):
     if lst[mid][key] > target:
         return binary_search(lst, key, target, start, mid - 1)
 
-    if (lst[mid][key] < target):
+    if lst[mid][key] < target:
         return binary_search(lst, key, target, mid + 1, end)
